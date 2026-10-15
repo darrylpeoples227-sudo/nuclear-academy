@@ -1,10 +1,9 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
-  Download,
   ExternalLink,
   Globe2,
   LockKeyhole,
@@ -37,6 +36,31 @@ export default function Page() {
   const [activeUrl, setActiveUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
+  const startupSound = useRef<HTMLAudioElement>(null)
+  const exitSound = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => {
+    void startupSound.current?.play().catch(() => {
+      // Browsers may block autoplay until the first interaction.
+    })
+  }, [])
+
+  function closeBrowser() {
+    setIsExiting(true)
+    const audio = exitSound.current
+    if (!audio) return
+    audio.currentTime = 0
+    void audio.play().catch(() => finishExit())
+    audio.onended = finishExit
+  }
+
+  function finishExit() {
+    window.close()
+    window.setTimeout(() => {
+      window.location.replace('about:blank')
+    }, 100)
+  }
 
   function navigate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -77,7 +101,7 @@ export default function Page() {
             <button type="button" aria-label="Bookmark" onClick={() => setIsBookmarked(!isBookmarked)}><Star aria-hidden="true" fill={isBookmarked ? "currentColor" : "none"} /></button>
           </form>
           <div className="toolbar-actions">
-            <button type="button" aria-label="Downloads"><Download aria-hidden="true" /></button>
+            <button type="button" aria-label="Exit browser" onClick={closeBrowser}><X aria-hidden="true" /></button>
             <button type="button" aria-label="Menu"><Menu aria-hidden="true" /></button>
           </div>
         </div>
@@ -97,6 +121,15 @@ export default function Page() {
           </form>
         </div>
       </section>
+
+      <audio ref={startupSound} src="/wing5.wav" preload="auto" />
+      <audio ref={exitSound} src="/wing4.wav" preload="auto" />
+
+      {isExiting && (
+        <div className="exit-screen" role="status" aria-live="polite">
+          <span>Closing browser</span>
+        </div>
+      )}
     </main>
   )
 }
