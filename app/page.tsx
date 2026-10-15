@@ -73,7 +73,8 @@ export default function Page() {
     event.preventDefault()
     const nextUrl = normalizeAddress(address, selectedBrowser)
     if (!nextUrl) return
-    setActiveUrl(nextUrl)
+    const proxiedUrl = `/api/proxy?url=${encodeURIComponent(nextUrl)}`
+    setActiveUrl(proxiedUrl)
     setAddress(nextUrl)
     setIsLoading(true)
     window.setTimeout(() => setIsLoading(false), 650)
