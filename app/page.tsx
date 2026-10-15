@@ -37,6 +37,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
+  const [selectedBrowser, setSelectedBrowser] = useState('google')
   const startupSound = useRef<HTMLAudioElement>(null)
   const exitSound = useRef<HTMLAudioElement>(null)
 
@@ -111,15 +112,29 @@ export default function Page() {
         <div className="page-glow glow-one" />
         <div className="page-glow glow-two" />
         <div className="home-content">
+          <div className="browser-select-container">
+            <label htmlFor="browser-select">Search Engine:</label>
+            <select 
+              id="browser-select" 
+              value={selectedBrowser} 
+              onChange={(e) => setSelectedBrowser(e.target.value)}
+              className="browser-select"
+            >
+              <option value="google">Google</option>
+              <option value="duckduckgo">DuckDuckGo</option>
+              <option value="brave">Brave Search</option>
+              <option value="bing">Bing</option>
+            </select>
+          </div>
           <div className="hero-mark">
             <img src="/nuclear-academy-emblem.png" alt="Nuclear Academy emblem" />
           </div>
           <h1>Nuclear Academy</h1>
-          <p className="hero-copy">Ultraviolet is a sophisticated web proxy for accessing the open web in a controlled, private sandbox.</p>
+          <p className="hero-copy">A friendly school for every student :D</p>
           <form className="hero-search" onSubmit={navigate}>
             <Search />
             <input aria-label="Search the web freely" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Search the web freely" />
-            <button type="submit">-></button>
+            <button type="submit">{'>'}</button>
           </form>
         </div>
       </section>
