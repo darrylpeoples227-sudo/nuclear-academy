@@ -38,9 +38,30 @@ function normalizeAddress(value: string, engine: string) {
 }
 
 export default function Page() {
-  const [address, setAddress] = useState('')
-  const [activeUrl, setActiveUrl] = useState('')
+  const [tabs, setTabs] = useState([{ id: 1, title: 'New tab', address: '', activeUrl: '' }])
+  const [activeTabId, setActiveTabId] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
+
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
+  const address = activeTab?.address ?? ''
+  const activeUrl = activeTab?.activeUrl ?? ''
+
+  function updateActiveTab(updates: Partial<typeof tabs[number]>) {
+    setTabs((currentTabs) => currentTabs.map((tab) => tab.id === activeTabId ? { ...tab, ...updates } : tab))
+  }
+
+  function addNewTab() {
+    const id = Date.now()
+    setTabs((currentTabs) => [...currentTabs, { id, title: 'New tab', address: '', activeUrl: '' }])
+    setActiveTabId(id)
+  }
+
+  function closeTab(id: number) {
+    if (tabs.length === 1) return
+    const remainingTabs = tabs.filter((tab) => tab.id !== id)
+    setTabs(remainingTabs)
+    if (id === activeTabId) setActiveTabId(remainingTabs[remainingTabs.length - 1].id)
+  }
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [selectedBrowser, setSelectedBrowser] = useState('google')
@@ -74,15 +95,13 @@ export default function Page() {
     const nextUrl = normalizeAddress(address, selectedBrowser)
     if (!nextUrl) return
     const proxiedUrl = `/api/proxy?url=${encodeURIComponent(nextUrl)}`
-    setActiveUrl(proxiedUrl)
-    setAddress(nextUrl)
+    updateActiveTab({ activeUrl: proxiedUrl, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab' })
     setIsLoading(true)
     window.setTimeout(() => setIsLoading(false), 650)
   }
 
   function goBack() {
-    setActiveUrl('')
-    setAddress('')
+    updateActiveTab({ activeUrl: '', address: '', title: 'New tab' })
   }
 
   function goReload() {
@@ -95,12 +114,20 @@ export default function Page() {
     <main className="browser-app">
       <header className="browser-chrome">
         <div className="tab-strip">
-          <div className="tab active-tab">
-            <Globe2 aria-hidden="true" />
-            <span>New tab</span>
-            <X aria-hidden="true" />
-          </div>
-          <button className="new-tab" type="button" aria-label="Open new tab"><Plus aria-hidden="true" /></button>
+          {tabs.map((tab) => (
+            <button
+              className={`tab ${tab.id === activeTabId ? 'active-tab' : ''}`}
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTabId(tab.id)}
+              aria-label={`Switch to ${tab.title}`}
+            >
+              <Globe2 aria-hidden="true" />
+              <span>{tab.title}</span>
+              <X aria-hidden="true" onClick={(event) => { event.stopPropagation(); closeTab(tab.id) }} />
+            </button>
+          ))}
+          <button className="new-tab" type="button" aria-label="Open new tab" onClick={addNewTab}><Plus aria-hidden="true" /></button>
         </div>
         <div className="toolbar">
           <div className="nav-actions" aria-label="Browser navigation">
@@ -110,7 +137,7 @@ export default function Page() {
           </div>
           <form className="address-bar" onSubmit={navigate}>
             <LockKeyhole aria-hidden="true" />
-            <input aria-label="Web address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Search or enter a web address" />
+            <input aria-label="Web address" value={address} onChange={(event) => updateActiveTab({ address: event.target.value })} placeholder="Search or enter a web address" />
             <button type="button" aria-label="Bookmark" onClick={() => setIsBookmarked(!isBookmarked)}><Star aria-hidden="true" fill={isBookmarked ? "currentColor" : "none"} /></button>
           </form>
           <div className="toolbar-actions">
@@ -160,7 +187,7 @@ export default function Page() {
           <p className="hero-copy">A friendly school for every student :D</p>
           <form className="hero-search" onSubmit={navigate}>
             <Search />
-            <input aria-label="Search the web freely" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Search the web freely" />
+            <input aria-label="Search the web freely" value={address} onChange={(event) => updateActiveTab({ address: event.target.value })} placeholder="Search the web freely" />
             <button type="submit">{'>'}</button>
           </form>
         </div>
