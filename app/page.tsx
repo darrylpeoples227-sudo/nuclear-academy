@@ -57,23 +57,67 @@ export default function Page() {
   return (
     <main className="browser-app">
       <header className="browser-chrome">
-
-
+        <div className="window-bar">
+          <div className="brand-lockup">
+            <img src="/uv.png" alt="Ultraviolet logo" className="brand-mark" />
+            <span>Ultraviolet Browser</span>
+          </div>
+          <div className="window-actions" aria-label="Window controls">
+            <button aria-label="Minimize window"><span className="minimize" /></button>
+            <button aria-label="Maximize window"><Maximize2 /></button>
+            <button aria-label="Close window"><X /></button>
+          </div>
+        </div>
+        <div className="tab-bar">
+          <div className="tab active-tab">
+            <Globe2 />
+            <span>{activeUrl ? new URL(activeUrl).hostname : 'New tab'}</span>
+            <button aria-label="Close tab"><X /></button>
+          </div>
+          <button className="new-tab" aria-label="Open new tab" onClick={() => { setAddress(''); setActiveUrl('') }}><Plus /></button>
+        </div>
+        <div className="toolbar">
+          <div className="nav-actions">
+            <button aria-label="Go back"><ArrowLeft /></button>
+            <button aria-label="Go forward"><ArrowRight /></button>
+            <button aria-label="Reload" onClick={() => setIsLoading(true)}><RotateCw className={isLoading ? 'spin' : ''} /></button>
+          </div>
+          <form className="address-bar" onSubmit={navigate}>
+            <LockKeyhole className="address-lock" />
+            <input aria-label="Address and search bar" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Search or enter a web address" />
+            <button type="button" aria-label="Bookmark this page" className={isBookmarked ? 'bookmarked' : ''} onClick={() => setIsBookmarked(!isBookmarked)}><Star /></button>
+          </form>
+          <div className="toolbar-actions">
+            <button aria-label="Downloads"><Download /></button>
+            <button aria-label="Open menu"><Menu /></button>
+          </div>
+        </div>
+        {isLoading && <div className="loading-line" />}
       </header>
 
       <section className="browser-page" aria-label="New tab page">
         <div className="page-glow glow-one" />
         <div className="page-glow glow-two" />
         <div className="home-content">
-          <div className="hero-mark"></div>
-          <h1>Nuclear Academy</h1>
+          <div className="hero-mark"><ShieldCheck /></div>
+          <p className="eyebrow">PRIVATE · FAST · OPEN</p>
+          <h1>Browse without limits.</h1>
           <p className="hero-copy">Ultraviolet is a sophisticated web proxy for accessing the open web in a controlled, private sandbox.</p>
           <form className="hero-search" onSubmit={navigate}>
             <Search />
             <input aria-label="Search the web freely" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Search the web freely" />
-            <button type="submit">-></button>
+            <button type="submit">Go</button>
           </form>
+          <div className="quick-links" aria-label="Quick links">
+            {suggestions.map((suggestion) => (
+              <button key={suggestion.title} className="quick-link" onClick={() => useSuggestion(suggestion.url)}>
+                <span className="quick-icon"><ExternalLink /></span>
+                <span><strong>{suggestion.title}</strong><small>{suggestion.description}</small></span>
+              </button>
+            ))}
+          </div>
         </div>
+        <footer className="browser-footer"><span>Ultraviolet · TitaniumNetwork</span><span>Protected by service workers</span></footer>
       </section>
     </main>
   )
