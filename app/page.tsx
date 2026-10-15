@@ -57,8 +57,30 @@ export default function Page() {
   return (
     <main className="browser-app">
       <header className="browser-chrome">
-
-
+        <div className="tab-strip">
+          <div className="tab active-tab">
+            <Globe2 aria-hidden="true" />
+            <span>New tab</span>
+            <X aria-hidden="true" />
+          </div>
+          <button className="new-tab" type="button" aria-label="Open new tab"><Plus aria-hidden="true" /></button>
+        </div>
+        <div className="toolbar">
+          <div className="nav-actions" aria-label="Browser navigation">
+            <button type="button" aria-label="Back"><ArrowLeft aria-hidden="true" /></button>
+            <button type="button" aria-label="Forward"><ArrowRight aria-hidden="true" /></button>
+            <button type="button" aria-label="Reload"><RotateCw aria-hidden="true" /></button>
+          </div>
+          <form className="address-bar" onSubmit={navigate}>
+            <LockKeyhole aria-hidden="true" />
+            <input aria-label="Web address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Search or enter a web address" />
+            <button type="button" aria-label="Bookmark" onClick={() => setIsBookmarked(!isBookmarked)}><Star aria-hidden="true" fill={isBookmarked ? "currentColor" : "none"} /></button>
+          </form>
+          <div className="toolbar-actions">
+            <button type="button" aria-label="Downloads"><Download aria-hidden="true" /></button>
+            <button type="button" aria-label="Menu"><Menu aria-hidden="true" /></button>
+          </div>
+        </div>
       </header>
 
       <section className="browser-page" aria-label="New tab page">

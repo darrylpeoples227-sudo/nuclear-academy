@@ -22,7 +22,24 @@ button, input { font: inherit; }
 button { cursor: pointer; }
 
 .browser-app { min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: #0a0b0e; }
-.browser-chrome { display: none; }
+.browser-chrome { background: #14161b; color: #9ca3af; border-bottom: 1px solid rgba(255,255,255,.08); }
+.tab-strip { height: 41px; display: flex; align-items: flex-end; gap: 8px; padding: 0 10px; background: #111318; }
+.active-tab { width: 260px; height: 33px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border-radius: 9px 9px 0 0; background: #1d2027; color: #d8dbe2; font-size: 13px; }
+.active-tab svg:first-child { width: 14px; height: 14px; color: #75e09a; }
+.active-tab svg:last-child { width: 14px; height: 14px; margin-left: auto; color: #8c919b; }
+.new-tab, .nav-actions button, .toolbar-actions button, .address-bar button { display: grid; place-items: center; border: 0; background: transparent; color: inherit; }
+.new-tab { width: 28px; height: 33px; color: #8c919b; }
+.new-tab svg { width: 16px; height: 16px; }
+.toolbar { min-height: 53px; display: flex; align-items: center; gap: 14px; padding: 0 15px 0 17px; }
+.nav-actions, .toolbar-actions { display: flex; align-items: center; gap: 12px; }
+.nav-actions button, .toolbar-actions button { width: 22px; height: 32px; padding: 0; }
+.nav-actions svg, .toolbar-actions svg { width: 17px; height: 17px; stroke-width: 1.8; }
+.address-bar { flex: 1; height: 36px; display: flex; align-items: center; gap: 11px; padding: 0 9px 0 14px; border: 1px solid #2d3139; border-radius: 20px; background: #0f1115; }
+.address-bar > svg { width: 16px; height: 16px; color: #aab0bc; }
+.address-bar input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #d8dbe2; font-size: 13px; }
+.address-bar input::placeholder { color: #7c828e; }
+.address-bar button { width: 24px; height: 24px; color: #8c919b; }
+.address-bar button svg { width: 16px; height: 16px; }
 .hero-search { display: flex; align-items: center; }
 .spin { animation: spin .65s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
