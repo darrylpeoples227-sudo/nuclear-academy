@@ -23,12 +23,18 @@ const suggestions = [
   { title: 'TitaniumNetwork', url: 'https://github.com/titaniumnetwork-dev', description: 'Open web tooling and projects' },
 ]
 
-function normalizeAddress(value: string) {
+function normalizeAddress(value: string, engine: string) {
   const trimmed = value.trim()
   if (!trimmed) return ''
   if (/^https?:\/\//i.test(trimmed)) return trimmed
   if (/^[^\s]+\.[^\s]+$/.test(trimmed)) return `https://${trimmed}`
-  return `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`
+  const searchUrls: Record<string, string> = {
+    google: 'https://www.google.com/search?q=',
+    duckduckgo: 'https://duckduckgo.com/?q=',
+    brave: 'https://search.brave.com/search?q=',
+    bing: 'https://www.bing.com/search?q=',
+  }
+  return `${searchUrls[engine] ?? searchUrls.google}${encodeURIComponent(trimmed)}`
 }
 
 export default function Page() {
@@ -65,18 +71,23 @@ export default function Page() {
 
   function navigate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const nextUrl = normalizeAddress(address)
+    const nextUrl = normalizeAddress(address, selectedBrowser)
     if (!nextUrl) return
     setActiveUrl(nextUrl)
+    setAddress(nextUrl)
     setIsLoading(true)
     window.setTimeout(() => setIsLoading(false), 650)
   }
 
-  function useSuggestion(url: string) {
-    setAddress(url)
-    setActiveUrl(url)
+  function goBack() {
+    setActiveUrl('')
+    setAddress('')
+  }
+
+  function goReload() {
+    if (!activeUrl) return
     setIsLoading(true)
-    window.setTimeout(() => setIsLoading(false), 650)
+    window.setTimeout(() => setIsLoading(false), 400)
   }
 
   return (
@@ -92,9 +103,9 @@ export default function Page() {
         </div>
         <div className="toolbar">
           <div className="nav-actions" aria-label="Browser navigation">
-            <button type="button" aria-label="Back"><ArrowLeft aria-hidden="true" /></button>
-            <button type="button" aria-label="Forward"><ArrowRight aria-hidden="true" /></button>
-            <button type="button" aria-label="Reload"><RotateCw aria-hidden="true" /></button>
+            <button type="button" aria-label="Back" onClick={goBack} disabled={!activeUrl}><ArrowLeft aria-hidden="true" /></button>
+            <button type="button" aria-label="Forward" disabled><ArrowRight aria-hidden="true" /></button>
+            <button type="button" aria-label="Reload" onClick={goReload} disabled={!activeUrl}><RotateCw aria-hidden="true" className={isLoading ? 'spin' : undefined} /></button>
           </div>
           <form className="address-bar" onSubmit={navigate}>
             <LockKeyhole aria-hidden="true" />
@@ -111,6 +122,21 @@ export default function Page() {
       <section className="browser-page" aria-label="New tab page">
         <div className="page-glow glow-one" />
         <div className="page-glow glow-two" />
+        {activeUrl ? (
+          <div className="browser-view" aria-label="Browsing content">
+            <div className="browser-view-status">
+              {isLoading ? 'Loading page…' : 'Browsing'}
+              <a href={activeUrl} target="_blank" rel="noreferrer">Open in new tab</a>
+            </div>
+            <iframe
+              key={activeUrl}
+              title="Web page"
+              src={activeUrl}
+              className="web-frame"
+              sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+            />
+          </div>
+        ) : (
         <div className="home-content">
           <div className="browser-select-container">
             <label htmlFor="browser-select">Search Engine:</label>
@@ -137,6 +163,7 @@ export default function Page() {
             <button type="submit">{'>'}</button>
           </form>
         </div>
+        )}
       </section>
 
       <audio ref={startupSound} src="/wing5.wav" preload="auto" />
