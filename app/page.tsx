@@ -111,7 +111,9 @@ export default function Page() {
         <div className="page-glow glow-one" />
         <div className="page-glow glow-two" />
         <div className="home-content">
-          <div className="hero-mark"></div>
+          <div className="hero-mark">
+            <img src="/nuclear-academy-emblem.png" alt="Nuclear Academy emblem" />
+          </div>
           <h1>Nuclear Academy</h1>
           <p className="hero-copy">Ultraviolet is a sophisticated web proxy for accessing the open web in a controlled, private sandbox.</p>
           <form className="hero-search" onSubmit={navigate}>
