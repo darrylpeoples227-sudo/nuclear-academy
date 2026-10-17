@@ -152,10 +152,6 @@ export default function Page() {
         <div className="page-glow glow-two" />
         {activeUrl ? (
           <div className="browser-view" aria-label="Browsing content">
-            <div className="browser-view-status">
-              {isLoading ? 'Loading page…' : 'Browsing'}
-              <a href={activeUrl} target="_blank" rel="noreferrer">Open in new tab</a>
-            </div>
             <iframe
               key={activeUrl}
               title="Web page"
