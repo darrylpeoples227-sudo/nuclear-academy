@@ -45,6 +45,7 @@ export default function Page() {
   const [assistantInput, setAssistantInput] = useState('')
   const [assistantLoading, setAssistantLoading] = useState(false)
   const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
+  const [assistantCategory, setAssistantCategory] = useState('help')
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -131,7 +132,7 @@ export default function Page() {
     setAssistantInput('')
     setAssistantLoading(true)
     try {
-      const response = await fetch('/api/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: nextMessages }) })
+      const response = await fetch('/api/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: nextMessages, category: assistantCategory }) })
       const data = await response.json()
       setAssistantMessages([...nextMessages, { role: 'assistant', content: data.text ?? data.error }])
     } catch {
@@ -180,7 +181,22 @@ export default function Page() {
 
       {assistantOpen && (
         <aside className="assistant-panel" aria-label="Nuclear Academy Assistant">
-          <div className="assistant-header"><div><strong>Nuclear Academy Assistant</strong><span>Help with math, science, reading, and more</span></div><button type="button" aria-label="Close assistant" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
+          <div className="assistant-header-bar">
+            <h2>Nuclear Academy Assistant</h2>
+            <button type="button" aria-label="Close assistant" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button>
+          </div>
+          <div className="assistant-categories" aria-label="Subject categories">
+            {['Help', 'Math', 'Science', 'Social Studies', 'Reading', 'Suggestions'].map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={`category-btn ${assistantCategory === category.toLowerCase() ? 'active' : ''}`}
+                onClick={() => setAssistantCategory(category.toLowerCase())}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
           <div className="assistant-messages" aria-live="polite">
             {assistantMessages.length === 0 && <p className="assistant-welcome">Hi! Ask me anything about school, studying, or an idea you are exploring.</p>}
             {assistantMessages.map((message, index) => <div className={`assistant-message ${message.role}`} key={`${message.role}-${index}`}>{message.content}</div>)}
