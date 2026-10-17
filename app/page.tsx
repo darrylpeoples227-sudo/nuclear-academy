@@ -110,6 +110,10 @@ export default function Page() {
     window.setTimeout(() => setIsLoading(false), 400)
   }
 
+  function browseCategory(category: string) {
+    updateActiveTab({ address: category })
+  }
+
   return (
     <main className="browser-app">
       <header className="browser-chrome">
@@ -186,6 +190,13 @@ export default function Page() {
             <input aria-label="Search the web freely" value={address} onChange={(event) => updateActiveTab({ address: event.target.value })} placeholder="Search the web freely" />
             <button type="submit">{'>'}</button>
           </form>
+          <nav className="category-tabs" aria-label="Explore categories">
+            {['Apps', 'Games', 'AI', 'Chat'].map((category) => (
+              <button key={category} type="button" onClick={() => browseCategory(category)}>
+                {category}
+              </button>
+            ))}
+          </nav>
         </div>
         )}
       </section>
