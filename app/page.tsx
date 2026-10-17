@@ -5,15 +5,24 @@ import {
   ArrowLeft,
   ArrowRight,
   ExternalLink,
+  Bell,
   Globe2,
+  Hash,
+  Headphones,
+  HelpCircle,
   LockKeyhole,
-  Maximize2,
   Menu,
+  Mic,
+  Pin,
   Plus,
   RotateCw,
   Search,
+  Send,
+  Settings,
   ShieldCheck,
+  Smile,
   Star,
+  Users,
   X,
 } from 'lucide-react'
 
@@ -46,6 +55,12 @@ export default function Page() {
   const [assistantLoading, setAssistantLoading] = useState(false)
   const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [assistantCategory, setAssistantCategory] = useState('help')
+  const [chatInput, setChatInput] = useState('')
+  const [chatMessages, setChatMessages] = useState([
+    { name: 'Nova', initials: 'N', color: '#5865f2', text: 'Welcome to the Nuclear Academy community!', time: 'Today at 9:41 AM' },
+    { name: 'Maya', initials: 'M', color: '#eb459e', text: 'Hey everyone! Does anyone want to study together later?', time: 'Today at 9:43 AM' },
+    { name: 'Alex', initials: 'A', color: '#57f287', text: 'I’m in. I need to review the science chapter.', time: 'Today at 9:44 AM' },
+  ])
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -123,6 +138,14 @@ export default function Page() {
     updateActiveTab({ address: category })
   }
 
+  function sendChatMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const text = chatInput.trim()
+    if (!text) return
+    setChatMessages((messages) => [...messages, { name: 'You', initials: 'Y', color: '#00aff4', text, time: 'Just now' }])
+    setChatInput('')
+  }
+
   async function askAssistant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const content = assistantInput.trim()
@@ -180,29 +203,33 @@ export default function Page() {
       </header>
 
       {assistantOpen && (
-        <aside className="assistant-panel" aria-label="Nuclear Academy Assistant">
-          <div className="assistant-header-bar">
-            <h2>Nuclear Academy Assistant</h2>
-            <button type="button" aria-label="Close assistant" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button>
-          </div>
-          <div className="assistant-categories" aria-label="Subject categories">
-            {['Help', 'Math', 'Science', 'Social Studies', 'Reading', 'Suggestions'].map((category) => (
-              <button
-                key={category}
-                type="button"
-                className={`category-btn ${assistantCategory === category.toLowerCase() ? 'active' : ''}`}
-                onClick={() => setAssistantCategory(category.toLowerCase())}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-          <div className="assistant-messages" aria-live="polite">
-            {assistantMessages.length === 0 && <p className="assistant-welcome">Hi! Ask me anything about school, studying, or an idea you are exploring.</p>}
-            {assistantMessages.map((message, index) => <div className={`assistant-message ${message.role}`} key={`${message.role}-${index}`}>{message.content}</div>)}
-            {assistantLoading && <div className="assistant-message assistant">Thinking…</div>}
-          </div>
-          <form className="assistant-form" onSubmit={askAssistant}><input value={assistantInput} onChange={(event) => setAssistantInput(event.target.value)} placeholder="Ask for help…" aria-label="Ask the assistant" /><button type="submit" disabled={assistantLoading || !assistantInput.trim()}>Ask</button></form>
+        <aside className="discord-shell" aria-label="Nuclear Academy online chat">
+          <nav className="discord-servers" aria-label="Servers">
+            <button className="server-orb server-home" type="button" aria-label="Nuclear Academy">N</button>
+            <span className="server-divider" />
+            <button className="server-orb active-server" type="button" aria-label="Study Lounge">SL</button>
+            <button className="server-orb add-server" type="button" aria-label="Add a server"><Plus aria-hidden="true" /></button>
+          </nav>
+          <section className="discord-channels">
+            <div className="discord-server-title"><strong>Study Lounge</strong><button type="button" aria-label="Close chat" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
+            <div className="channel-search"><Search aria-hidden="true" /><span>Find a channel</span></div>
+            <p className="channel-heading">TEXT CHANNELS <Plus aria-hidden="true" /></p>
+            <button className="channel active-channel" type="button"><Hash aria-hidden="true" /><span>general</span></button>
+            <button className="channel" type="button"><Hash aria-hidden="true" /><span>homework-help</span></button>
+            <button className="channel" type="button"><Hash aria-hidden="true" /><span>study-tips</span></button>
+            <p className="channel-heading voice-heading">VOICE CHANNELS <Plus aria-hidden="true" /></p>
+            <button className="channel" type="button"><Headphones aria-hidden="true" /><span>Study Room</span></button>
+            <div className="discord-user-card"><div className="user-avatar">Y<span /></div><div><strong>You</strong><small>Online</small></div><div className="user-actions"><Mic aria-hidden="true" /><Headphones aria-hidden="true" /><Settings aria-hidden="true" /></div></div>
+          </section>
+          <section className="discord-chat">
+            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div><div className="chat-tools"><Bell aria-hidden="true" /><Pin aria-hidden="true" /><Users aria-hidden="true" /><HelpCircle aria-hidden="true" /></div></header>
+            <div className="discord-messages" aria-live="polite">
+              <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #general!</h1><p>This is the beginning of this channel.</p></div>
+              {chatMessages.map((message, index) => <article className="discord-message" key={`${message.name}-${index}`}><div className="message-avatar" style={{ background: message.color }}>{message.initials}</div><div><div className="message-meta"><strong>{message.name}</strong><time>{message.time}</time></div><p>{message.text}</p></div></article>)}
+            </div>
+            <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Message #general" aria-label="Message general channel" /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
+          </section>
+          <aside className="discord-members"><div className="members-heading">ONLINE — 3</div><div className="member-row"><div className="message-avatar small" style={{ background: '#5865f2' }}>N</div><strong>Nova</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#eb459e' }}>M</div><strong>Maya</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#57f287' }}>A</div><strong>Alex</strong></div></aside>
         </aside>
       )}
 
