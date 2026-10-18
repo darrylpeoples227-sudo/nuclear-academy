@@ -33,6 +33,14 @@ const suggestions = [
   { title: 'TitaniumNetwork', url: 'https://github.com/titaniumnetwork-dev', description: 'Open web tooling and projects' },
 ]
 
+const appLinks = [
+  ['Crunchyroll', 'https://crunchyroll.com'], ['X/Twitter', 'https://x.com/'], ['Twitch', 'https://www.twitch.tv/'], ['Truth Social', 'https://truthsocial.com/'], ['Reddit', 'https://reddit.com'], ['Soundboard', 'https://soundbuttonsworld.com/'], ['FMHY', 'https://fmhy.net'], ['Spotify', 'https://open.spotify.com/'], ['Amazon', 'https://www.amazon.com/'], ['Apple Music', 'https://music.apple.com/us/new'], ['Disney +', 'https://www.disneyplus.com/'], ['GeforceNOW', 'https://play.geforcenow.com/mall/#/loginwall'], ['eBay', 'https://www.ebay.com/'], ['Hacker Typer', 'https://hackertyper.net/'], ['Monochrome Music', 'https://monochrome.tf/'], ['NBA', 'https://www.nba.com/'], ['Gauth', 'https://www.gauthmath.com/'], ['CapCut', 'https://www.capcut.com/'], ['Discord', 'https://discord.com/'], ['TikTok', 'https://www.tiktok.com/'], ['Instagram', 'https://www.instagram.com/'], ['YouTube Music', 'https://music.youtube.com/'], ['Fandom', 'https://www.fandom.com/'], ['W3Schools', 'https://www.w3schools.com/'], ['Code Visual Studio', 'https://code.visualstudio.com/'], ['Scratch', 'https://scratch.mit.edu/'], ['Sh1mmer', 'https://sh1mmer.me/'], ['Thirty Dollar Website', 'https://thirtydollar.website'], ['V86', 'https://copy.sh/v86/'], ['Tiermaker', 'https://tiermaker.com/'], ['Chrome Music Lab', 'https://musiclab.chromeexperiments.com/'], ['ExtPrint3r', 'https://extprint3r.github.io/'], ['Base44', 'https://base44.app/'],
+]
+
+const gameLinks = [
+  ['Yohoho io', 'https://yohoho.io/'], ['Slither io', 'http://slither.com/io'], ['Agar io', 'https://agar.io/'], ['Paper io', 'https://paperio.site/'], ['OVO', 'https://www.dedragames.com/games/ovo/1.1/'], ['OVO 2', 'https://dedragames.com/games/ovo2/0.2alpha/'], ['OVO 3', 'https://dedragames.com/games/ovo3/'], ['DOOM', 'https://swordslasher.com/games/doom/'], ['DOOM 2', 'https://swordslasher.com/games/doom2/'], ['Run', 'https://swordslasher.com/games/run1/'], ['Run 2', 'https://swordslasher.com/games/run2/'], ['Run 3', 'https://swordslasher.com/games/run3/'], ['Cookie Clicker', 'https://swordslasher.com/games/cookieclicker/'], ['Angry Birds', 'https://swordslasher.com/games/angrybirds/index.html'],
+]
+
 function normalizeAddress(value: string, engine: string) {
   const trimmed = value.trim()
   if (!trimmed) return ''
@@ -87,6 +95,7 @@ export default function Page() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [selectedBrowser, setSelectedBrowser] = useState('google')
+  const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | null>(null)
   const startupSound = useRef<HTMLAudioElement>(null)
   const exitSound = useRef<HTMLAudioElement>(null)
 
@@ -133,12 +142,24 @@ export default function Page() {
   }
 
   function browseCategory(category: string) {
+    if (category === 'Apps' || category === 'Games') {
+      setCatalogCategory(category)
+      return
+    }
     if (category === 'AI' || category === 'Chat') {
       setAssistantMode(category === 'AI' ? 'ai' : 'chat')
       setAssistantOpen(true)
       return
     }
     updateActiveTab({ address: category })
+  }
+
+  function openCatalogLink(url: string) {
+    const proxiedUrl = `/api/proxy?url=${encodeURIComponent(url)}`
+    updateActiveTab({ activeUrl: proxiedUrl, address: url, title: new URL(url).hostname || 'New tab' })
+    setCatalogCategory(null)
+    setIsLoading(true)
+    window.setTimeout(() => setIsLoading(false), 650)
   }
 
   function sendChatMessage(event: FormEvent<HTMLFormElement>) {
@@ -269,6 +290,15 @@ export default function Page() {
           <form className="assistant-form" onSubmit={askAssistant}><input value={assistantInput} onChange={(event) => setAssistantInput(event.target.value)} placeholder={`Ask a ${assistantCategory} question…`} aria-label="Ask the AI assistant" /><button type="submit" disabled={assistantLoading || !assistantInput.trim()}>Ask</button></form>
         </aside>
       ))}
+
+      {catalogCategory && (
+        <section className="catalog-overlay" aria-label={`${catalogCategory} directory`}>
+          <div className="catalog-card">
+            <div className="catalog-heading"><div><span className="catalog-kicker">NUCLEAR ACADEMY DIRECTORY</span><h2>{catalogCategory}</h2><p>Choose a site to open in your browser tab.</p></div><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button></div>
+            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).map(([name, url]) => <button className="catalog-item" key={url} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon">{name.slice(0, 1)}</span><span>{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+          </div>
+        </section>
+      )}
 
       <section className="browser-page" aria-label="New tab page">
         <div className="page-glow glow-one" />
