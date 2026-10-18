@@ -51,6 +51,7 @@ export default function Page() {
   const [activeTabId, setActiveTabId] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
+  const [assistantMode, setAssistantMode] = useState<'chat' | 'ai'>('chat')
   const [assistantInput, setAssistantInput] = useState('')
   const [assistantLoading, setAssistantLoading] = useState(false)
   const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
@@ -132,6 +133,7 @@ export default function Page() {
 
   function browseCategory(category: string) {
     if (category === 'AI' || category === 'Chat') {
+      setAssistantMode(category === 'AI' ? 'ai' : 'chat')
       setAssistantOpen(true)
       return
     }
@@ -202,7 +204,7 @@ export default function Page() {
         </div>
       </header>
 
-      {assistantOpen && (
+      {assistantOpen && (assistantMode === 'chat' ? (
         <aside className="discord-shell" aria-label="Nuclear Academy online chat">
           <nav className="discord-servers" aria-label="Servers">
             <button className="server-orb server-home" type="button" aria-label="Nuclear Academy">N</button>
@@ -231,7 +233,26 @@ export default function Page() {
           </section>
           <aside className="discord-members"><div className="members-heading">ONLINE — 3</div><div className="member-row"><div className="message-avatar small" style={{ background: '#5865f2' }}>N</div><strong>Nova</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#eb459e' }}>M</div><strong>Maya</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#57f287' }}>A</div><strong>Alex</strong></div></aside>
         </aside>
-      )}
+      ) : (
+        <aside className="ai-fullscreen" aria-label="Nuclear Academy AI Assistant">
+          <header className="ai-fullscreen-header">
+            <div><span className="ai-orb">AI</span><div><h2>Nuclear Academy AI</h2><p>Your study partner for math, science, reading, and more</p></div></div>
+            <button type="button" aria-label="Return to online chat" onClick={() => setAssistantMode('chat')}><Users aria-hidden="true" /> Chat</button>
+            <button type="button" aria-label="Close AI assistant" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button>
+          </header>
+          <div className="assistant-categories" aria-label="Subject categories">
+            {['Help', 'Math', 'Science', 'Social Studies', 'Reading', 'Suggestions'].map((category) => (
+              <button key={category} type="button" className={`category-btn ${assistantCategory === category.toLowerCase() ? 'active' : ''}`} onClick={() => setAssistantCategory(category.toLowerCase())}>{category}</button>
+            ))}
+          </div>
+          <div className="assistant-messages" aria-live="polite">
+            {assistantMessages.length === 0 && <p className="assistant-welcome">Hi! Ask me anything about school, studying, or an idea you are exploring.</p>}
+            {assistantMessages.map((message, index) => <div className={`assistant-message ${message.role}`} key={`${message.role}-${index}`}>{message.content}</div>)}
+            {assistantLoading && <div className="assistant-message assistant">Thinking…</div>}
+          </div>
+          <form className="assistant-form" onSubmit={askAssistant}><input value={assistantInput} onChange={(event) => setAssistantInput(event.target.value)} placeholder={`Ask a ${assistantCategory} question…`} aria-label="Ask the AI assistant" /><button type="submit" disabled={assistantLoading || !assistantInput.trim()}>Ask</button></form>
+        </aside>
+      ))}
 
       <section className="browser-page" aria-label="New tab page">
         <div className="page-glow glow-one" />
