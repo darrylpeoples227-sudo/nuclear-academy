@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useRef, useState } from 'react'
+import { SignInButton, SignUpButton, Show, UserButton } from '@clerk/nextjs'
 import {
   ArrowLeft,
   ArrowRight,
@@ -205,6 +206,19 @@ export default function Page() {
       </header>
 
       {assistantOpen && (assistantMode === 'chat' ? (
+        <>
+          <Show when="signed-out">
+            <aside className="chat-auth-gate" aria-label="Sign in to chat">
+              <div className="chat-auth-card">
+                <div className="ai-orb">N</div>
+                <h2>Join the Study Lounge</h2>
+                <p>Sign in or create an account before chatting online, joining servers, or sharing invite codes.</p>
+                <div className="chat-auth-actions"><SignInButton mode="modal"><button type="button" className="auth-primary">Sign in</button></SignInButton><SignUpButton mode="modal"><button type="button" className="auth-secondary">Create account</button></SignUpButton></div>
+                <button type="button" className="auth-dismiss" onClick={() => setAssistantOpen(false)}>Maybe later</button>
+              </div>
+            </aside>
+          </Show>
+          <Show when="signed-in">
         <aside className="discord-shell" aria-label="Nuclear Academy online chat">
           <nav className="discord-servers" aria-label="Servers">
             <button className="server-orb server-home" type="button" aria-label="Nuclear Academy">N</button>
@@ -221,7 +235,7 @@ export default function Page() {
             <button className="channel" type="button"><Hash aria-hidden="true" /><span>study-tips</span></button>
             <p className="channel-heading voice-heading">VOICE CHANNELS <Plus aria-hidden="true" /></p>
             <button className="channel" type="button"><Headphones aria-hidden="true" /><span>Study Room</span></button>
-            <div className="discord-user-card"><div className="user-avatar">Y<span /></div><div><strong>You</strong><small>Online</small></div><div className="user-actions"><Mic aria-hidden="true" /><Headphones aria-hidden="true" /><Settings aria-hidden="true" /></div></div>
+            <div className="discord-user-card"><div className="user-avatar">Y<span /></div><div><strong>You</strong><small>Online</small></div><div className="user-actions"><Mic aria-hidden="true" /><Headphones aria-hidden="true" /><Settings aria-hidden="true" /><UserButton /></div></div>
           </section>
           <section className="discord-chat">
             <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div><div className="chat-tools"><Bell aria-hidden="true" /><Pin aria-hidden="true" /><Users aria-hidden="true" /><HelpCircle aria-hidden="true" /></div></header>
@@ -233,6 +247,8 @@ export default function Page() {
           </section>
           <aside className="discord-members"><div className="members-heading">ONLINE — 3</div><div className="member-row"><div className="message-avatar small" style={{ background: '#5865f2' }}>N</div><strong>Nova</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#eb459e' }}>M</div><strong>Maya</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#57f287' }}>A</div><strong>Alex</strong></div></aside>
         </aside>
+          </Show>
+        </>
       ) : (
         <aside className="ai-fullscreen" aria-label="Nuclear Academy AI Assistant">
           <header className="ai-fullscreen-header">
