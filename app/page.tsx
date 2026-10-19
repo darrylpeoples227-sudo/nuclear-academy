@@ -6,6 +6,8 @@ import {
   ArrowLeft,
   ArrowRight,
   ExternalLink,
+  Download,
+  FileJson,
   Bell,
   Gamepad2,
   Globe2,
@@ -17,16 +19,19 @@ import {
   Menu,
   MessagesSquare,
   Mic,
+  Palette,
   Pin,
   Plus,
   RotateCw,
   Search,
   Send,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   Smile,
   Sparkles,
   Star,
+  Upload,
   Users,
   X,
 } from 'lucide-react'
@@ -100,8 +105,35 @@ export default function Page() {
   const [isExiting, setIsExiting] = useState(false)
   const [selectedBrowser, setSelectedBrowser] = useState('google')
   const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [panicUrl, setPanicUrl] = useState('https://www.google.com')
+  const [panicCombo, setPanicCombo] = useState('Control+Shift+X')
+  const [antiClose, setAntiClose] = useState(false)
+  const [backgroundColor, setBackgroundColor] = useState('#7eff84')
+  const [backgroundImage, setBackgroundImage] = useState('')
+  const [cloakName, setCloakName] = useState('Nuclear Academy')
+  const [cloakLogo, setCloakLogo] = useState('/nuclear-academy-emblem.png')
+  const importInput = useRef<HTMLInputElement>(null)
   const startupSound = useRef<HTMLAudioElement>(null)
   const exitSound = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => {
+    document.title = cloakName
+    let icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+    if (!icon) { icon = document.createElement('link'); icon.rel = 'icon'; document.head.appendChild(icon) }
+    icon.href = cloakLogo
+  }, [cloakName, cloakLogo])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const pressed = `${event.ctrlKey ? 'Control+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.altKey ? 'Alt+' : ''}${event.key.toUpperCase()}`
+      if (pressed === panicCombo.toUpperCase()) window.location.assign(panicUrl)
+    }
+    const onBeforeUnload = (event: BeforeUnloadEvent) => { if (antiClose) { event.preventDefault(); event.returnValue = '' } }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('beforeunload', onBeforeUnload) }
+  }, [panicCombo, panicUrl, antiClose])
 
   useEffect(() => {
     void startupSound.current?.play().catch(() => {
@@ -166,6 +198,31 @@ export default function Page() {
     window.setTimeout(() => setIsLoading(false), 650)
   }
 
+  function exportData() {
+    const payload = { panicUrl, panicCombo, antiClose, backgroundColor, backgroundImage, cloakName, cloakLogo, selectedBrowser }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'nuclear-academy-settings.json'; link.click(); URL.revokeObjectURL(link.href)
+  }
+
+  function importData(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => { try { const data = JSON.parse(String(reader.result)); setPanicUrl(data.panicUrl ?? panicUrl); setPanicCombo(data.panicCombo ?? panicCombo); setAntiClose(Boolean(data.antiClose)); setBackgroundColor(data.backgroundColor ?? backgroundColor); setBackgroundImage(data.backgroundImage ?? ''); setCloakName(data.cloakName ?? cloakName); setCloakLogo(data.cloakLogo ?? cloakLogo); setSelectedBrowser(data.selectedBrowser ?? selectedBrowser) } catch { window.alert('That settings file is not valid JSON.') } }
+    reader.readAsText(file)
+    event.target.value = ''
+  }
+
+  function resetSettings() {
+    setPanicUrl('https://www.google.com'); setPanicCombo('Control+Shift+X'); setAntiClose(false); setBackgroundColor('#7eff84'); setBackgroundImage(''); setCloakName('Nuclear Academy'); setCloakLogo('/nuclear-academy-emblem.png'); setSelectedBrowser('google')
+  }
+
+  function handleBackgroundImage(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader(); reader.onload = () => setBackgroundImage(String(reader.result)); reader.readAsDataURL(file)
+  }
+
   function sendChatMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const text = chatInput.trim()
@@ -194,7 +251,7 @@ export default function Page() {
   }
 
   return (
-    <main className="browser-app">
+    <main className="browser-app" style={{ backgroundColor, backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <header className="browser-chrome">
         <div className="tab-strip">
           {tabs.map((tab) => (
@@ -225,10 +282,27 @@ export default function Page() {
           </form>
           <div className="toolbar-actions">
             <button type="button" aria-label="Exit browser" onClick={closeBrowser}><X aria-hidden="true" /></button>
-            <button type="button" aria-label="Menu"><Menu aria-hidden="true" /></button>
+            <button type="button" aria-label="Open settings" onClick={() => setSettingsOpen(true)}><Menu aria-hidden="true" /></button>
           </div>
         </div>
       </header>
+
+      {settingsOpen && (
+        <section className="settings-overlay" aria-label="Settings">
+          <div className="settings-panel">
+            <header className="settings-header"><div><span className="settings-kicker">NUCLEAR ACADEMY</span><h2>Settings</h2><p>Customize your browser workspace.</p></div><button type="button" className="settings-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings"><X /></button></header>
+            <div className="settings-grid">
+              <section className="settings-section"><div className="settings-section-title"><ShieldAlert /><div><h3>Panic Button</h3><p>Use your key combo to leave instantly.</p></div></div><label>Redirect URL<input value={panicUrl} onChange={(e) => setPanicUrl(e.target.value)} placeholder="https://www.google.com" /></label><label>Key Combo<input value={panicCombo} onChange={(e) => setPanicCombo(e.target.value)} placeholder="Control+Shift+X" /></label><button className="panic-button" type="button" onClick={() => window.location.assign(panicUrl)}>Test Panic Button</button></section>
+              <section className="settings-section"><div className="settings-section-title"><ShieldCheck /><div><h3>Safety</h3><p>Control how the browser can be closed.</p></div></div><label className="toggle-row"><span>Anti Close</span><input type="checkbox" checked={antiClose} onChange={(e) => setAntiClose(e.target.checked)} /><span className="toggle-ui" /></label></section>
+              <section className="settings-section"><div className="settings-section-title"><Search /><div><h3>Search Engine</h3><p>Choose the engine used for searches.</p></div></div><select className="settings-select" value={selectedBrowser} onChange={(e) => setSelectedBrowser(e.target.value)}><option value="google">Google</option><option value="duckduckgo">DuckDuckGo</option><option value="brave">Brave Search</option><option value="bing">Bing</option></select></section>
+              <section className="settings-section"><div className="settings-section-title"><Palette /><div><h3>Appearance</h3><p>Set a custom color or background image.</p></div></div><label>Background color<input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} /></label><label className="file-button"><Upload /> Add background image<input type="file" accept="image/*" onChange={handleBackgroundImage} /></label></section>
+              <section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Tab Cloak</h3><p>Change the browser title and favicon.</p></div></div><label>Website name<input value={cloakName} onChange={(e) => setCloakName(e.target.value)} /></label><label className="file-button"><Upload /> Add logo<input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = () => setCloakLogo(String(reader.result)); reader.readAsDataURL(file) } }} /></label><div className="cloak-presets">{['Google','Google Docs','Google Drive','Google Classroom','Google Slides','Google Sheets','IXL','Canvas','Gmail','Khan Academy','Clever','Schoology','Quizlet','Edpuzzle','Desmos','PowerSchool'].map((name) => <button type="button" key={name} onClick={() => setCloakName(name)}>{name}</button>)}</div></section>
+              <section className="settings-section data-section"><div className="settings-section-title"><FileJson /><div><h3>Data</h3><p>Export or import your settings.</p></div></div><div className="data-actions"><button type="button" onClick={exportData}><Download /> Export</button><button type="button" onClick={() => importInput.current?.click()}><Upload /> Import</button><input ref={importInput} type="file" accept="application/json" onChange={importData} /></div></section>
+            </div>
+            <button className="reset-settings" type="button" onClick={resetSettings}>Reset to Default</button>
+          </div>
+        </section>
+      )}
 
       {assistantOpen && (assistantMode === 'chat' ? (
         <>
@@ -305,7 +379,7 @@ export default function Page() {
         </section>
       )}
 
-      <section className="browser-page" aria-label="New tab page">
+      <section className="browser-page" aria-label="New tab page" style={{ backgroundColor, backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div className="page-glow glow-one" />
         <div className="page-glow glow-two" />
         {activeUrl ? (
@@ -320,20 +394,6 @@ export default function Page() {
           </div>
         ) : (
         <div className="home-content">
-          <div className="browser-select-container">
-            <label htmlFor="browser-select">Search Engine:</label>
-            <select 
-              id="browser-select" 
-              value={selectedBrowser} 
-              onChange={(e) => setSelectedBrowser(e.target.value)}
-              className="browser-select"
-            >
-              <option value="google">Google</option>
-              <option value="duckduckgo">DuckDuckGo</option>
-              <option value="brave">Brave Search</option>
-              <option value="bing">Bing</option>
-            </select>
-          </div>
           <div className="hero-mark">
             <img src="/nuclear-academy-emblem.png" alt="Nuclear Academy emblem" />
           </div>
