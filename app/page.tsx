@@ -294,8 +294,9 @@ export default function Page() {
       {catalogCategory && (
         <section className="catalog-overlay" aria-label={`${catalogCategory} directory`}>
           <div className="catalog-card">
-            <div className="catalog-heading"><div><span className="catalog-kicker">NUCLEAR ACADEMY DIRECTORY</span><h2>{catalogCategory}</h2><p>Choose a site to open in your browser tab.</p></div><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button></div>
-            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).map(([name, url]) => <button className="catalog-item" key={url} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon">{name.slice(0, 1)}</span><span>{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+            <div className="catalog-topbar"><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button><label className="catalog-search"><Search aria-hidden="true" /><input aria-label={`Search ${catalogCategory}`} placeholder="Search" /><kbd>/</kbd></label><span className="catalog-spacer" /></div>
+            <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : 'Open a favorite app in your browser.'}</p></div>
+            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={url} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-number">{index + 1}</span><span className="catalog-icon">{name.slice(0, 1)}</span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
           </div>
         </section>
       )}
