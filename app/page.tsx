@@ -5,6 +5,7 @@ import { SignInButton, SignUpButton, Show, UserButton, useUser } from '@clerk/ne
 import {
   ArrowLeft,
   ArrowRight,
+  Copy,
   ExternalLink,
   Download,
   FileJson,
@@ -18,6 +19,7 @@ import {
   LockKeyhole,
   Menu,
   MessagesSquare,
+  MicOff,
   Mic,
   Palette,
   Pin,
@@ -70,6 +72,14 @@ export default function Page() {
   const [ownerOpen, setOwnerOpen] = useState(false)
   const [ownerUsers, setOwnerUsers] = useState<Array<{ id: string; email: string; name: string; role: string; status: string; timeoutUntil: string | null }>>([])
   const [ownerError, setOwnerError] = useState('')
+  const [profileName, setProfileName] = useState('You')
+  const [profileImage, setProfileImage] = useState('')
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [privateRoomCode, setPrivateRoomCode] = useState<string | null>(null)
+  const [voiceJoined, setVoiceJoined] = useState(false)
+  const [voiceMuted, setVoiceMuted] = useState(false)
+  const profileInput = useRef<HTMLInputElement>(null)
+  const micStream = useRef<MediaStream | null>(null)
   const [tabs, setTabs] = useState([{ id: 1, title: 'New tab', address: '', activeUrl: '' }])
   const [activeTabId, setActiveTabId] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -203,6 +213,34 @@ export default function Page() {
     window.setTimeout(() => setIsLoading(false), 650)
   }
 
+  function updateProfileImage(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader(); reader.onload = () => setProfileImage(String(reader.result)); reader.readAsDataURL(file)
+  }
+
+  function createPrivateRoom() {
+    const code = Math.random().toString(36).slice(2, 8).toUpperCase()
+    setPrivateRoomCode(code)
+  }
+
+  async function toggleVoice() {
+    if (voiceJoined) {
+      micStream.current?.getTracks().forEach((track) => track.stop())
+      micStream.current = null; setVoiceJoined(false); setVoiceMuted(false); return
+    }
+    try {
+      micStream.current = await navigator.mediaDevices.getUserMedia({ audio: true })
+      setVoiceJoined(true)
+    } catch { setOwnerError('Microphone access was blocked. Allow microphone permission to join voice chat.') }
+  }
+
+  function toggleMute() {
+    const nextMuted = !voiceMuted
+    micStream.current?.getAudioTracks().forEach((track) => { track.enabled = !nextMuted })
+    setVoiceMuted(nextMuted)
+  }
+
   async function openOwnerPanel() {
     setOwnerOpen(true); setOwnerError('')
     const response = await fetch('/api/owner/users')
@@ -306,6 +344,8 @@ export default function Page() {
         </div>
       </header>
 
+      {profileOpen && <section className="profile-modal" aria-label="Edit profile"><div className="profile-card"><button className="profile-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close profile editor"><X /></button><div className="profile-preview">{profileImage ? <img src={profileImage} alt="Profile preview" /> : profileName.slice(0, 1).toUpperCase()}</div><h2>Edit your profile</h2><label>Display name<input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={24} /></label><label className="profile-upload">Upload profile picture<input ref={profileInput} type="file" accept="image/*" onChange={updateProfileImage} /></label><button className="profile-save" type="button" onClick={() => setProfileOpen(false)}>Save profile</button></div></section>}
+
       {ownerOpen && isOwner && (
         <section className="settings-overlay owner-overlay" aria-label="Owner panel"><div className="settings-panel owner-panel"><header className="settings-header"><div><span className="settings-kicker">OWNER CONTROL</span><h2>Community moderation</h2><p>Signed in as {user?.primaryEmailAddress?.emailAddress}</p></div><button type="button" className="settings-close" onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"><X /></button></header><div className="owner-tools"><div><strong>Message moderation</strong><p>Messages containing <code>message</code> are blocked by default.</p></div><span className="owner-status">Active</span></div>{ownerError && <p className="owner-error">{ownerError}</p>}<div className="owner-user-list">{ownerUsers.map((member) => <article className="owner-user" key={member.id}><div><strong>{member.name}</strong><small>{member.email}</small></div><span className={`owner-badge ${member.status}`}>{member.role} · {member.status}</span><div className="owner-actions"><button type="button" onClick={() => moderateUser(member.id, member.status === 'banned' ? 'unban' : 'ban')}>{member.status === 'banned' ? 'Unban' : 'Ban'}</button><button type="button" onClick={() => moderateUser(member.id, member.timeoutUntil ? 'untimeout' : 'timeout', { timeoutMinutes: 10 })}>{member.timeoutUntil ? 'Remove timeout' : 'Timeout 10m'}</button><button type="button" onClick={() => moderateUser(member.id, member.role === 'member' ? 'rank' : 'unrank', { role: 'moderator' })}>{member.role === 'member' ? 'Rank moderator' : 'Unrank'}</button></div></article>)}</div></div></section>
       )}
@@ -356,8 +396,8 @@ export default function Page() {
             <button className="channel" type="button"><Hash aria-hidden="true" /><span>homework-help</span></button>
             <button className="channel" type="button"><Hash aria-hidden="true" /><span>study-tips</span></button>
             <p className="channel-heading voice-heading">VOICE CHANNELS <Plus aria-hidden="true" /></p>
-            <button className="channel" type="button"><Headphones aria-hidden="true" /><span>Study Room</span></button>
-            <div className="discord-user-card"><div className="user-avatar">Y<span /></div><div><strong>You</strong><small>Online</small></div><div className="user-actions"><Mic aria-hidden="true" /><Headphones aria-hidden="true" /><Settings aria-hidden="true" /><UserButton /></div></div>
+            <button className={`channel ${voiceJoined ? 'active-channel' : ''}`} type="button" onClick={toggleVoice}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && <small className="voice-live">LIVE</small>}</button><button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}
+            <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? 'In Study Room' : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
           </section>
           <section className="discord-chat">
             <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div><div className="chat-tools"><Bell aria-hidden="true" /><Pin aria-hidden="true" /><Users aria-hidden="true" /><HelpCircle aria-hidden="true" /></div></header>
