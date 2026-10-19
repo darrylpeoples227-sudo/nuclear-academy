@@ -67,6 +67,7 @@ function normalizeAddress(value: string, engine: string) {
 }
 
 export default function Page() {
+  const [isClient, setIsClient] = useState(false)
   const { user } = useUser()
   const isOwner = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === 'darrylpeoples227@gmail.com'
   const [ownerOpen, setOwnerOpen] = useState(false)
@@ -131,6 +132,10 @@ export default function Page() {
   const importInput = useRef<HTMLInputElement>(null)
   const startupSound = useRef<HTMLAudioElement>(null)
   const exitSound = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   useEffect(() => {
     document.title = cloakName
@@ -305,6 +310,10 @@ export default function Page() {
     } finally {
       setAssistantLoading(false)
     }
+  }
+
+  if (!isClient) {
+    return <main className="browser-app hydration-shell" aria-busy="true" />
   }
 
   return (
