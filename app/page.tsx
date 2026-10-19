@@ -7,12 +7,15 @@ import {
   ArrowRight,
   ExternalLink,
   Bell,
+  Gamepad2,
   Globe2,
   Hash,
   Headphones,
   HelpCircle,
+  LayoutGrid,
   LockKeyhole,
   Menu,
+  MessagesSquare,
   Mic,
   Pin,
   Plus,
@@ -22,6 +25,7 @@ import {
   Settings,
   ShieldCheck,
   Smile,
+  Sparkles,
   Star,
   Users,
   X,
@@ -296,7 +300,7 @@ export default function Page() {
           <div className="catalog-card">
             <div className="catalog-topbar"><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button><label className="catalog-search"><Search aria-hidden="true" /><input aria-label={`Search ${catalogCategory}`} placeholder="Search" /><kbd>/</kbd></label><span className="catalog-spacer" /></div>
             <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : 'Open a favorite app in your browser.'}</p></div>
-            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={url} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-number">{index + 1}</span><span className="catalog-icon">{name.slice(0, 1)}</span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={url} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon">{name.slice(0, 1)}</span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
           </div>
         </section>
       )}
@@ -341,9 +345,15 @@ export default function Page() {
             <button type="submit">{'>'}</button>
           </form>
           <nav className="category-tabs" aria-label="Explore categories">
-            {['Apps', 'Games', 'AI', 'Chat'].map((category) => (
-              <button key={category} type="button" onClick={() => browseCategory(category)}>
-                {category}
+{[
+              ['Apps', LayoutGrid],
+              ['Games', Gamepad2],
+              ['AI', Sparkles],
+              ['Chat', MessagesSquare],
+            ].map(([category, Icon]) => (
+              <button key={category as string} type="button" onClick={() => browseCategory(category as string)}>
+                <Icon aria-hidden="true" />
+                {category as string}
               </button>
             ))}
           </nav>
