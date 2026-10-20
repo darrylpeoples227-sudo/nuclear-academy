@@ -501,7 +501,7 @@ export default function Page() {
 
       {isExiting && (
         <div className="exit-screen" role="status" aria-live="polite">
-          <span>Closing browser</span>
+          <span>cya! next time keep playing more GAMES</span>
         </div>
       )}
     </main>
