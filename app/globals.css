@@ -64,7 +64,7 @@ html, body { width: 100%; min-height: 100%; height: 100%; }
 .catalog-item::before { position: absolute; inset: 0; background: radial-gradient(circle at 72% 26%, rgba(255,255,255,.6) 0 2px, transparent 3px), radial-gradient(circle at 24% 72%, rgba(255,255,255,.32) 0 2px, transparent 3px); content: ''; opacity: .55; }
 .catalog-item:hover, .catalog-item:focus-visible { transform: translateY(-6px) rotate(-1deg); filter: brightness(1.14); outline: none; }
 .catalog-item > svg { position: absolute; right: 9px; bottom: 11px; z-index: 2; width: 15px; color: rgba(255,255,255,.75); }
-.catalog-icon { position: absolute; top: 50%; left: 50%; z-index: 1; display: grid; place-items: center; width: 78px; height: 78px; border-radius: 22px; background: rgba(255,255,255,.17); color: rgba(255,255,255,.82); font-family: Georgia, serif; font-size: 56px; transform: translate(-50%, -50%); }
+.catalog-icon { position: absolute; top: 50%; left: 50%; z-index: 1; display: grid; place-items: center; width: 78px; height: 78px; border-radius: 22px; background: rgba(255,255,255,.17); color: rgba(255,255,255,.82); font-family: Georgia, serif; font-size: 56px; transform: translate(-50%, -50%); }.catalog-icon img { width: 58px; height: 58px; border-radius: 14px; object-fit: cover; }.catalog-icon img + span { display: none; width: 58px; height: 58px; place-items: center; border-radius: 14px; background: rgba(255,255,255,.2); }
 .catalog-name { position: relative; z-index: 2; max-width: calc(100% - 20px); overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .tile-2 { background: linear-gradient(145deg, #352e4b, #171529 60%, #0a0911); }
 .tile-3 { background: linear-gradient(145deg, #567070, #152a2a 58%, #080d0d); }
