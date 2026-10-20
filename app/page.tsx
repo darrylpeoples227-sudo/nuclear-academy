@@ -304,8 +304,9 @@ export default function Page() {
     setAssistantLoading(true)
     try {
       const response = await fetch('/api/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: nextMessages, category: assistantCategory }) })
-      const data = await response.json()
-      setAssistantMessages([...nextMessages, { role: 'assistant', content: data.text ?? data.error }])
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || 'Assistant request failed')
+  setAssistantMessages([...nextMessages, { role: 'assistant', content: data.text ?? 'I did not receive a response. Please try again.' }])
     } catch {
       setAssistantMessages([...nextMessages, { role: 'assistant', content: 'I could not connect right now. Please try again.' }])
     } finally {
