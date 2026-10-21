@@ -470,7 +470,7 @@ export default function Page() {
         ) : (
         <div className="home-content">
           <div className="hero-mark">
-            <img src="/nuclear-academy-emblem.png" alt="Nuclear Academy emblem" />
+            <img src="/nuclear-academy-emblem.png" alt="Nuclear Academy logo" />
           </div>
           <h1>Nuclear Academy</h1>
           <p className="hero-copy">A friendly school for every student :D</p>

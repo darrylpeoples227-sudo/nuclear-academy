@@ -4,17 +4,17 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Ultraviolet Browser',
-  description: 'A private, fast, open browser shell powered by Ultraviolet.',
+  title: 'Nuclear Academy',
+  description: 'Nuclear Academy is a private, fast browser and learning space.',
   generator: 'v0.app',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
+        url: '/nuclear-academy-emblem.png',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/icon-dark-32x32.png',
+        url: '/nuclear-academy-emblem.png',
         media: '(prefers-color-scheme: dark)',
       },
       {
