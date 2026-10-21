@@ -19,6 +19,7 @@ import {
   LockKeyhole,
   Menu,
   MessagesSquare,
+  Monitor,
   MicOff,
   Mic,
   Palette,
@@ -46,6 +47,11 @@ const suggestions = [
 
 const appLinks = [
   ['Crunchyroll', 'https://crunchyroll.com'], ['X/Twitter', 'https://x.com/'], ['Twitch', 'https://www.twitch.tv/'], ['Truth Social', 'https://truthsocial.com/'], ['Reddit', 'https://reddit.com'], ['Soundboard', 'https://soundbuttonsworld.com/'], ['FMHY', 'https://fmhy.net'], ['Spotify', 'https://open.spotify.com/'], ['Amazon', 'https://www.amazon.com/'], ['Apple Music', 'https://music.apple.com/us/new'], ['Disney +', 'https://www.disneyplus.com/'], ['GeforceNOW', 'https://play.geforcenow.com/mall/#/loginwall'], ['eBay', 'https://www.ebay.com/'], ['Hacker Typer', 'https://hackertyper.net/'], ['Monochrome Music', 'https://monochrome.tf/'], ['NBA', 'https://www.nba.com/'], ['Gauth', 'https://www.gauthmath.com/'], ['CapCut', 'https://www.capcut.com/'], ['Discord', 'https://discord.com/'], ['TikTok', 'https://www.tiktok.com/'], ['Instagram', 'https://www.instagram.com/'], ['YouTube Music', 'https://music.youtube.com/'], ['Fandom', 'https://www.fandom.com/'], ['W3Schools', 'https://www.w3schools.com/'], ['Code Visual Studio', 'https://code.visualstudio.com/'], ['Scratch', 'https://scratch.mit.edu/'], ['Sh1mmer', 'https://sh1mmer.me/'], ['Thirty Dollar Website', 'https://thirtydollar.website'], ['V86', 'https://copy.sh/v86/'], ['Tiermaker', 'https://tiermaker.com/'], ['Chrome Music Lab', 'https://musiclab.chromeexperiments.com/'], ['ExtPrint3r', 'https://extprint3r.github.io/'], ['Base44', 'https://base44.app/'], ['About:blank Launcher', 'https://straight-blank-launch-pad.base44.app/'], ['Browser.lol', 'https://browser.lol/'],
+]
+
+const vmLinks = [
+  ['Selkies Linux Desktop', 'https://github.com/selkies-project/selkies'],
+  ['Selkies Documentation', 'https://docs.selkies.io/'],
 ]
 
 const gameLinks = [
@@ -121,7 +127,7 @@ export default function Page() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [selectedBrowser, setSelectedBrowser] = useState('google')
-  const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | null>(null)
+  const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | 'VMs' | null>(null)
   const [catalogSearch, setCatalogSearch] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [panicUrl, setPanicUrl] = useState('https://www.google.com')
@@ -200,7 +206,7 @@ export default function Page() {
   }
 
   function browseCategory(category: string) {
-    if (category === 'Apps' || category === 'Games') {
+    if (category === 'Apps' || category === 'Games' || category === 'VMs') {
       setCatalogCategory(category)
       return
     }
@@ -448,8 +454,8 @@ export default function Page() {
         <section className="catalog-overlay" aria-label={`${catalogCategory} directory`}>
           <div className="catalog-card">
             <div className="catalog-topbar"><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button><label className="catalog-search"><Search aria-hidden="true" /><input aria-label={`Search ${catalogCategory}`} placeholder="Search by name" value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} /><kbd>/</kbd></label><span className="catalog-spacer" /></div>
-            <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : 'Open a favorite app in your browser.'}</p></div>
-            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+            <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : catalogCategory === 'VMs' ? 'Launch a remote desktop workspace or read the Selkies setup guide.' : 'Open a favorite app in your browser.'}</p></div>
+            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : catalogCategory === 'VMs' ? vmLinks : gameLinks).filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
           </div>
         </section>
       )}
@@ -483,6 +489,7 @@ export default function Page() {
 {[
               ['Apps', LayoutGrid],
               ['Games', Gamepad2],
+              ['VMs', Monitor],
               ['AI', Sparkles],
               ['Chat', MessagesSquare],
             ].map(([category, Icon]) => (
