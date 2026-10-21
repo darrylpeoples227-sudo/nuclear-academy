@@ -137,7 +137,6 @@ export default function Page() {
   const [selectedBrowser, setSelectedBrowser] = useState('google')
   const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | 'VMs' | null>(null)
   const [catalogSearch, setCatalogSearch] = useState('')
-  const [selectedVm, setSelectedVm] = useState<[string, string] | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [panicUrl, setPanicUrl] = useState('https://www.google.com')
   const [panicCombo, setPanicCombo] = useState('Control+Shift+X')
@@ -227,8 +226,7 @@ export default function Page() {
     updateActiveTab({ address: category })
   }
 
-  function openCatalogLink(url: string, isVmArchive = false) {
-    if (isVmArchive) return
+  function openCatalogLink(url: string) {
     const proxiedUrl = `/api/proxy?url=${encodeURIComponent(url)}`
     updateActiveTab({ activeUrl: proxiedUrl, address: url, title: new URL(url).hostname || 'New tab' })
     setCatalogCategory(null)
@@ -460,14 +458,12 @@ export default function Page() {
         </aside>
       ))}
 
-      {selectedVm && <section className="vm-detail-overlay" aria-label={`${selectedVm[0]} details`}><div className="vm-detail-card"><button type="button" className="catalog-close" onClick={() => setSelectedVm(null)} aria-label="Close VM details"><X aria-hidden="true" /></button><span className="catalog-kicker">NUCLEAR ACADEMY VM</span><h2>{selectedVm[0]}</h2><p>This VM project stays inside Nuclear Academy. Download the Docker archive when you are ready to run it.</p><div className="vm-detail-actions"><a href={selectedVm[1]} download target="_blank" rel="noopener noreferrer">Download archive</a><button type="button" onClick={() => setSelectedVm(null)}>Back to VMs</button></div></div></section>}
-
       {catalogCategory && (
         <section className="catalog-overlay" aria-label={`${catalogCategory} directory`}>
           <div className="catalog-card">
             <div className="catalog-topbar"><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button><label className="catalog-search"><Search aria-hidden="true" /><input aria-label={`Search ${catalogCategory}`} placeholder="Search by name" value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} /><kbd>/</kbd></label><span className="catalog-spacer" /></div>
-            <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : catalogCategory === 'VMs' ? 'Download Docker VM project archives to run with Docker.' : 'Open a favorite app in your browser.'}</p></div>
-            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : catalogCategory === 'VMs' ? vmLinks : gameLinks).filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => catalogCategory === 'VMs' ? setSelectedVm([name, url]) : openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+            <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : catalogCategory === 'VMs' ? 'Launch a remote desktop workspace or read the Selkies setup guide.' : 'Open a favorite app in your browser.'}</p></div>
+            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : catalogCategory === 'VMs' ? vmLinks : gameLinks).filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
           </div>
         </section>
       )}
