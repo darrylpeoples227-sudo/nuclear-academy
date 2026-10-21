@@ -53,11 +53,19 @@ export async function GET(request: NextRequest) {
     }
 
     if (contentType.includes('text/html')) {
-      const html = rewriteHtml(await upstream.text(), upstream.url || target.toString())
-      return new Response(html, { status: upstream.status, headers })
+      const sourceUrl = upstream.url || target.toString()
+      const body = await upstream.text()
+      if (!upstream.ok) {
+        const safeTitle = upstream.status === 403 ? 'This site blocked the request' : `This site returned ${upstream.status}`
+        const safeMessage = upstream.status === 403 ? 'The destination denied the browser proxy request. Try another link or open the original site directly.' : 'The destination could not provide a page through the browser proxy.'
+        const errorHtml = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><style>html,body{margin:0;min-height:100%;font-family:system-ui,sans-serif;background:#071208;color:#efffec}body{display:grid;place-items:center;padding:24px;box-sizing:border-box}.card{width:min(540px,100%);padding:36px;border:1px solid #315b35;border-radius:22px;background:#102313;box-shadow:0 24px 80px #0008}.eyebrow{color:#79e66a;font-size:11px;font-weight:800;letter-spacing:.14em}.card h1{margin:10px 0;font-size:30px}.card p{color:#a9c1aa;line-height:1.6}.url{overflow:hidden;color:#79e66a;text-overflow:ellipsis;white-space:nowrap}</style></head><body><main class="card"><div class="eyebrow">NUCLEAR ACADEMY BROWSER</div><h1>${safeTitle}</h1><p>${safeMessage}</p><p class="url">${sourceUrl}</p></main></body></html>`
+        headers.set('content-type', 'text/html; charset=utf-8')
+        return new Response(errorHtml, { status: 200, headers })
+      }
+      return new Response(rewriteHtml(body, sourceUrl), { status: 200, headers })
     }
 
-    return new Response(upstream.body, { status: upstream.status, headers })
+    return new Response(upstream.body, { status: upstream.ok ? 200 : upstream.status, headers })
   } catch {
     return new Response('Unable to load this page through the browser proxy.', { status: 502 })
   }

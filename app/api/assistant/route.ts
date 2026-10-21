@@ -1,4 +1,4 @@
-import { generateText } from 'ai'
+import { generateText, gateway } from 'ai'
 import { NextResponse } from 'next/server'
 
 const categoryPrompts: Record<string, string> = {
@@ -18,7 +18,8 @@ export async function POST(request: Request) {
     const systemPrompt = categoryPrompts[category] || categoryPrompts.help
     
     const result = await generateText({
-      model: 'openai/gpt-4o-mini',
+      model: gateway('openai/o4-mini'),
+      maxOutputTokens: 500,
       system: systemPrompt,
       messages: messages.slice(-20).map((message: { role: string; content: string }) => ({
         role: message.role === 'assistant' ? 'assistant' : 'user',
