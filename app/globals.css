@@ -21,7 +21,7 @@ html, body { width: 100%; min-height: 100%; height: 100%; }
   * { box-sizing: border-box; }
   button, input { font: inherit; }
   button { cursor: pointer; }
-  .hydration-shell { min-height: 100vh; background: #7eff84; }
+  .hydration-shell { min-height: 100vh; background: #ffffff; }
 .browser-app { width: 100%; height: 100dvh; min-height: 100%; display: flex; flex-direction: column; overflow: hidden; background: #0a0b0e; }
 .browser-chrome { background: #14161b; color: #9ca3af; border-bottom: 1px solid rgba(255,255,255,.08); }
 .tab-strip { height: 41px; display: flex; align-items: flex-end; gap: 0; padding: 0 10px; background: #062806; }
@@ -74,7 +74,7 @@ html, body { width: 100%; min-height: 100%; height: 100%; }
 .tile-7 { background: linear-gradient(145deg, #f1a92e, #a44924 58%, #2d1112); }
 @media (max-width: 900px) { .catalog-grid { grid-template-columns: repeat(4, minmax(140px, 1fr)); } }
 @media (max-width: 620px) { .catalog-card { padding-top: 10px; } .catalog-grid { grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 8px; } .catalog-item { height: 165px; } .catalog-search input { font-size: 28px; } }
-.browser-page { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; background: #7eff84; color: #36ce60; }
+.browser-page { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; background: #ffffff; color: #1a1a1a; }
 .page-glow { position: absolute; border-radius: 999px; filter: blur(2px); opacity: .28; pointer-events: none; }
 .glow-one { width: 420px; height: 220px; left: -140px; top: 5%; background: #473f99; filter: blur(100px); }
 .glow-two { width: 360px; height: 260px; right: -90px; bottom: 5%; background: #263c72; filter: blur(120px); }
