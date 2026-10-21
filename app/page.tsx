@@ -50,8 +50,16 @@ const appLinks = [
 ]
 
 const vmLinks = [
-  ['Selkies Linux Desktop', 'https://github.com/selkies-project/selkies'],
-  ['Selkies Documentation', 'https://docs.selkies.io/'],
+  ['Opera VM', 'https://blobs.vusercontent.net/blob/docker-opera-master-UfAcsDNVZJkiZcDdoSuSxSaeokNw3M.zip'],
+  ['Microsoft Edge VM', 'https://blobs.vusercontent.net/blob/docker-msedge-master-VvRDGazd0hB4ZHIOUrkKukEyTKTST8.zip'],
+  ['Steam VM', 'https://blobs.vusercontent.net/blob/docker-steam-master-mjBm4JdAQsdr8DbK1RPS39wr5N0Mcj.zip'],
+  ['Ungoogled Chromium VM', 'https://blobs.vusercontent.net/blob/docker-ungoogled-chromium-master-yvWRRaWBR2czopirIEaRoehZHeAE10.zip'],
+  ['WebCord VM', 'https://blobs.vusercontent.net/blob/docker-webcord-master-B7Rz1zIrquag8mHAJydpIDP9b2N0xN.zip'],
+  ['Brave VM', 'https://blobs.vusercontent.net/blob/docker-brave-master-VO3LwQtSs4jCDlVjJ2RxEBLqtIivsr.zip'],
+  ['Chrome VM', 'https://blobs.vusercontent.net/blob/docker-chrome-master-IUVDd8piaDryEjzNBNcbQhh3ekqgOO.zip'],
+  ['Chromium VM', 'https://blobs.vusercontent.net/blob/docker-chromium-master-Wtku4ljIKQaCLiln2D78ebPHjqKB2X.zip'],
+  ['Blender VM', 'https://blobs.vusercontent.net/blob/docker-blender-master-Le4YfMUjNSQ5Rj803XNu2gBR9iIuG2.zip'],
+  ['Firefox VM', 'https://blobs.vusercontent.net/blob/docker-firefox-master-HpBwelypDG3jthamEqWJvQsaJkpU8H.zip'],
 ]
 
 const gameLinks = [
