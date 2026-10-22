@@ -26,7 +26,7 @@ html, body { width: 100%; min-height: 100%; height: 100%; }
 .browser-chrome { background: #14161b; color: #9ca3af; border-bottom: 1px solid rgba(255,255,255,.08); }
 .tab-strip { height: 41px; display: flex; align-items: flex-end; gap: 0; padding: 0 10px; background: #062806; }
 .tab { width: 230px; height: 33px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 9px 9px 0 0; background: #3a2715; color: #eadbc7; font-size: 13px; }
-.tab:not(.active-tab) { background: #281806; }
+.tab:not(.active-tab) { background: #123b22; }
 .active-tab { background: #37c51d; color: #ffffff; }
 .tab svg:first-child { width: 14px; height: 14px; color: #d8c5aa; }
 .active-tab svg:first-child { color: #f1e4d2; }
