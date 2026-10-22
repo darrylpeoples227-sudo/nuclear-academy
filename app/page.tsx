@@ -19,7 +19,6 @@ import {
   LockKeyhole,
   Menu,
   MessagesSquare,
-  Monitor,
   MicOff,
   Mic,
   Palette,
@@ -49,19 +48,6 @@ const appLinks = [
   ['Crunchyroll', 'https://crunchyroll.com'], ['X/Twitter', 'https://x.com/'], ['Twitch', 'https://www.twitch.tv/'], ['Truth Social', 'https://truthsocial.com/'], ['Reddit', 'https://reddit.com'], ['Soundboard', 'https://soundbuttonsworld.com/'], ['FMHY', 'https://fmhy.net'], ['Spotify', 'https://open.spotify.com/'], ['Amazon', 'https://www.amazon.com/'], ['Apple Music', 'https://music.apple.com/us/new'], ['Disney +', 'https://www.disneyplus.com/'], ['GeforceNOW', 'https://play.geforcenow.com/mall/#/loginwall'], ['eBay', 'https://www.ebay.com/'], ['Hacker Typer', 'https://hackertyper.net/'], ['Monochrome Music', 'https://monochrome.tf/'], ['NBA', 'https://www.nba.com/'], ['Gauth', 'https://www.gauthmath.com/'], ['CapCut', 'https://www.capcut.com/'], ['Discord', 'https://discord.com/'], ['TikTok', 'https://www.tiktok.com/'], ['Instagram', 'https://www.instagram.com/'], ['YouTube Music', 'https://music.youtube.com/'], ['Fandom', 'https://www.fandom.com/'], ['W3Schools', 'https://www.w3schools.com/'], ['Code Visual Studio', 'https://code.visualstudio.com/'], ['Scratch', 'https://scratch.mit.edu/'], ['Sh1mmer', 'https://sh1mmer.me/'], ['Thirty Dollar Website', 'https://thirtydollar.website'], ['V86', 'https://copy.sh/v86/'], ['Tiermaker', 'https://tiermaker.com/'], ['Chrome Music Lab', 'https://musiclab.chromeexperiments.com/'], ['ExtPrint3r', 'https://extprint3r.github.io/'], ['Base44', 'https://base44.app/'], ['About:blank Launcher', 'https://straight-blank-launch-pad.base44.app/'], ['Browser.lol', 'https://browser.lol/'],
 ]
 
-const vmLinks = [
-  ['Opera VM', 'https://blobs.vusercontent.net/blob/docker-opera-master-UfAcsDNVZJkiZcDdoSuSxSaeokNw3M.zip'],
-  ['Microsoft Edge VM', 'https://blobs.vusercontent.net/blob/docker-msedge-master-VvRDGazd0hB4ZHIOUrkKukEyTKTST8.zip'],
-  ['Steam VM', 'https://blobs.vusercontent.net/blob/docker-steam-master-mjBm4JdAQsdr8DbK1RPS39wr5N0Mcj.zip'],
-  ['Ungoogled Chromium VM', 'https://blobs.vusercontent.net/blob/docker-ungoogled-chromium-master-yvWRRaWBR2czopirIEaRoehZHeAE10.zip'],
-  ['WebCord VM', 'https://blobs.vusercontent.net/blob/docker-webcord-master-B7Rz1zIrquag8mHAJydpIDP9b2N0xN.zip'],
-  ['Brave VM', 'https://blobs.vusercontent.net/blob/docker-brave-master-VO3LwQtSs4jCDlVjJ2RxEBLqtIivsr.zip'],
-  ['Chrome VM', 'https://blobs.vusercontent.net/blob/docker-chrome-master-IUVDd8piaDryEjzNBNcbQhh3ekqgOO.zip'],
-  ['Chromium VM', 'https://blobs.vusercontent.net/blob/docker-chromium-master-Wtku4ljIKQaCLiln2D78ebPHjqKB2X.zip'],
-  ['Blender VM', 'https://blobs.vusercontent.net/blob/docker-blender-master-Le4YfMUjNSQ5Rj803XNu2gBR9iIuG2.zip'],
-  ['Firefox VM', 'https://blobs.vusercontent.net/blob/docker-firefox-master-HpBwelypDG3jthamEqWJvQsaJkpU8H.zip'],
-]
-
 const gameLinks = [
   ['Yohoho io', 'https://yohoho.io/'], ['Slither io', 'http://slither.com/io'], ['Agar io', 'https://agar.io/'], ['Paper io', 'https://paperio.site/'], ['OVO', 'https://www.dedragames.com/games/ovo/1.1/'], ['OVO 2', 'https://dedragames.com/games/ovo2/0.2alpha/'], ['OVO 3', 'https://dedragames.com/games/ovo3/'], ['DOOM', 'https://swordslasher.com/games/doom/'], ['DOOM 2', 'https://swordslasher.com/games/doom2/'], ['Run', 'https://swordslasher.com/games/run1/'], ['Run 2', 'https://swordslasher.com/games/run2/'], ['Run 3', 'https://swordslasher.com/games/run3/'], ['Cookie Clicker', 'https://swordslasher.com/games/cookieclicker/'], ['Angry Birds', 'https://swordslasher.com/games/angrybirds/index.html'],
   ['2048', 'https://swordslasher.com/games/zeldalampshade/'], ['Duck Life', 'https://swordslasher.com/games/ducklife/'], ['Duck Life 2', 'https://swordslasher.com/games/ducklife2/'], ['Duck Life 3', 'https://swordslasher.com/games/ducklife3/'], ['Duck Life 4', 'https://swordslasher.com/games/ducklife4/'], ['Undertale', 'https://swordslasher.com/games/undertale/src/'], ['Deltarune', 'https://swordslasher.com/games/undertale/deltarune/'], ['N-gon', 'https://swordslasher.com/games/ngon/'], ['Super Mario 64', 'https://swordslasher.com/games/sm64/src/'], ['DNS Emulator', 'https://swordslasher.com/games/nds/'], ['Sonic 2', 'https://swordslasher.com/games/sonic2/'], ['GameBoy', 'https://swordslasher.com/games/gameboy/'], ['Ultimate Flash Sonic', 'https://swordslasher.com/games/ultimateflashsonic/'], ['Melon Sandbox', 'https://74.ip.nowgg.fun/apps/playducky/7199/melon-sandbox.html'], ['Roblox', 'https://74.ip.nowgg.fun/apps/a/19900/b.html'], ['Stumble Guys', 'https://74.ip.nowgg.fun/apps/a/10011/b.html'], ['Call Of Duty', 'https://74.ip.nowgg.fun/apps/a/10008/b.html'], ['Rocket League', 'https://74.ip.nowgg.fun/apps/a/10008/b.html'], ['Fortnite', 'https://nowgg.fun/apps/aptoide/5874/aptoide.html?deep_link=aptoidesearch://com.epicgames.fortnite'], ['Buckshot Roulette', 'https://swordslasher.com/games/buckshot/buckshot/'], ['Half Life', 'https://swordslasher.com/games/src/xash.html'], ['Super Meat Boy', 'https://swordslasher.com/games/bloonTDs/bloonTD2/'], ['FB@WG', 'https://amhooman.github.io/fireboywatergirl/game.html'], ['FB@WG 2', 'https://swordslasher.com/games/fbwg2/'], ['FB@WG 3', 'https://swordslasher.com/games/fbwg3/'], ['FB@WG 4', 'https://swordslasher.com/games/fbwg4/'], ['FB@WG 5', 'https://swordslasher.com/games/fbwg5/'], ['Slope', 'https://swordslasher.com/games/slope/'], ['Drive Mad', 'https://swordslasher.com/games/drive-mad/index.html'], ['Bit Life', 'https://swordslasher.com/games/bitlife/'], ['Wordle', 'https://swordslasher.com/games/wordle/#daily'], ['Retro Bowl', 'https://swordslasher.com/games/retrobowl/'], ['There Is Game', 'https://swordslasher.com/games/thereisnogame/alternate/871000/test.html'], ['FNF GO', 'https://www.fnfgo.com/'], ['Pac-Man', 'https://swordslasher.com/games/pacman2/'], ['Slope 2', 'https://playfreegamesonlinewithoutdownloading.github.io/slope-2-game.html'], ['Baldis Basics', 'https://playfreegamesonlinewithoutdownloading.github.io/baldis-basics.html'], ['Bad Time Simulator', 'https://playfreegamesonlinewithoutdownloading.github.io/bad-time-simulator.html'], ['Slope 3', 'https://playfreegamesonlinewithoutdownloading.github.io/slope-3.html'], ['Tiny Fishing', 'https://playfreegamesonlinewithoutdownloading.github.io/tiny-fishing.html'], ['Escape Road', 'https://playfreegamesonlinewithoutdownloading.github.io/escape-road.html'], ['Escape Road 2', 'https://playfreegamesonlinewithoutdownloading.github.io/escape-road-2.html'], ['Yandex games', 'https://yandex.com/games/'], ['Nowgg fun', 'https://nowgg.fun/'], ['Crazy games', 'https://www.crazygames.com/'], ['CoolMath Games', 'https://www.coolmathgames.com/'], ['Neal Fun', 'https://neal.fun/'], ['Mist', 'https://s3.amazonaws.com/misting2/index.html#/'], ['Space Waves', 'https://spacewaves.io/'], ['Ragdoll Hit', 'https://ragdollhit2.org/'], ['Ragdoll Archers', 'https://ragdollarchers2.io/'], ['Geometry Dash', 'https://geometrylitepc.net/'], ['Addicting Games', 'https://addictinggames.com/'], ['Y8 Games', 'https://y8.com/'], ['Poki', 'https://poki.com/'], ['Google Feud', 'https://googlefeud.com/'], 
@@ -88,6 +74,7 @@ export default function Page() {
   const [ownerOpen, setOwnerOpen] = useState(false)
   const [ownerUsers, setOwnerUsers] = useState<Array<{ id: string; email: string; name: string; role: string; status: string; timeoutUntil: string | null }>>([])
   const [ownerError, setOwnerError] = useState('')
+  const [ownerLoading, setOwnerLoading] = useState(false)
   const [profileName, setProfileName] = useState('You')
   const [profileImage, setProfileImage] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
@@ -106,11 +93,6 @@ export default function Page() {
   const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [assistantCategory, setAssistantCategory] = useState('help')
   const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState([
-    { name: 'Nova', initials: 'N', color: '#5865f2', text: 'Welcome to the Nuclear Academy community!', time: 'Today at 9:41 AM' },
-    { name: 'Maya', initials: 'M', color: '#eb459e', text: 'Hey everyone! Does anyone want to study together later?', time: 'Today at 9:43 AM' },
-    { name: 'Alex', initials: 'A', color: '#57f287', text: 'I’m in. I need to review the science chapter.', time: 'Today at 9:44 AM' },
-  ])
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -135,7 +117,7 @@ export default function Page() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [selectedBrowser, setSelectedBrowser] = useState('google')
-  const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | 'VMs' | null>(null)
+  const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | null>(null)
   const [catalogSearch, setCatalogSearch] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [panicUrl, setPanicUrl] = useState('https://www.google.com')
@@ -214,7 +196,7 @@ export default function Page() {
   }
 
   function browseCategory(category: string) {
-    if (category === 'Apps' || category === 'Games' || category === 'VMs') {
+    if (category === 'Apps' || category === 'Games') {
       setCatalogCategory(category)
       return
     }
@@ -263,10 +245,19 @@ export default function Page() {
   }
 
   async function openOwnerPanel() {
-    setOwnerOpen(true); setOwnerError('')
-    const response = await fetch('/api/owner/users')
-    if (!response.ok) { setOwnerError('Owner access could not be verified.'); return }
-    setOwnerUsers(await response.json())
+    setOwnerOpen(true)
+    setOwnerError('')
+    setOwnerLoading(true)
+    try {
+      const response = await fetch('/api/owner/users', { cache: 'no-store' })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Owner access could not be verified.')
+      setOwnerUsers(Array.isArray(data) ? data : [])
+    } catch (error) {
+      setOwnerError(error instanceof Error ? error.message : 'Owner access could not be verified.')
+    } finally {
+      setOwnerLoading(false)
+    }
   }
 
   async function moderateUser(userId: string, action: string, extra: Record<string, unknown> = {}) {
@@ -373,7 +364,7 @@ export default function Page() {
       {profileOpen && <section className="profile-modal" aria-label="Edit profile"><div className="profile-card"><button className="profile-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close profile editor"><X /></button><div className="profile-preview">{profileImage ? <img src={profileImage} alt="Profile preview" /> : profileName.slice(0, 1).toUpperCase()}</div><h2>Edit your profile</h2><label>Display name<input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={24} /></label><label className="profile-upload">Upload profile picture<input ref={profileInput} type="file" accept="image/*" onChange={updateProfileImage} /></label><button className="profile-save" type="button" onClick={() => setProfileOpen(false)}>Save profile</button></div></section>}
 
       {ownerOpen && isOwner && (
-        <section className="settings-overlay owner-overlay" aria-label="Owner panel"><div className="settings-panel owner-panel"><header className="settings-header"><div><span className="settings-kicker">OWNER CONTROL</span><h2>Community moderation</h2><p>Signed in as {user?.primaryEmailAddress?.emailAddress}</p></div><button type="button" className="settings-close" onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"><X /></button></header><div className="owner-tools"><div><strong>Message moderation</strong><p>Messages containing <code>message</code> are blocked by default.</p></div><span className="owner-status">Active</span></div>{ownerError && <p className="owner-error">{ownerError}</p>}<div className="owner-user-list">{ownerUsers.map((member) => <article className="owner-user" key={member.id}><div><strong>{member.name}</strong><small>{member.email}</small></div><span className={`owner-badge ${member.status}`}>{member.role} · {member.status}</span><div className="owner-actions"><button type="button" onClick={() => moderateUser(member.id, member.status === 'banned' ? 'unban' : 'ban')}>{member.status === 'banned' ? 'Unban' : 'Ban'}</button><button type="button" onClick={() => moderateUser(member.id, member.timeoutUntil ? 'untimeout' : 'timeout', { timeoutMinutes: 10 })}>{member.timeoutUntil ? 'Remove timeout' : 'Timeout 10m'}</button><button type="button" onClick={() => moderateUser(member.id, member.role === 'member' ? 'rank' : 'unrank', { role: 'moderator' })}>{member.role === 'member' ? 'Rank moderator' : 'Unrank'}</button></div></article>)}</div></div></section>
+        <section className="settings-overlay owner-overlay" aria-label="Owner panel"><div className="settings-panel owner-panel"><header className="settings-header"><div><span className="settings-kicker">OWNER CONTROL</span><h2>Community moderation</h2><p>Signed in as {user?.primaryEmailAddress?.emailAddress}</p></div><button type="button" className="settings-close" onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"><X /></button></header><div className="owner-tools"><div><strong>Message moderation</strong><p>Messages containing <code>message</code> are blocked by default.</p></div><span className="owner-status">Active</span></div>{ownerError && <p className="owner-error">{ownerError}</p>}{ownerLoading && <p className="owner-loading" role="status">Loading community members...</p>}{!ownerLoading && !ownerError && ownerUsers.length === 0 && <p className="owner-loading">No community members found.</p>}<div className="owner-user-list">{ownerUsers.map((member) => <article className="owner-user" key={member.id}><div><strong>{member.name}</strong><small>{member.email}</small></div><span className={`owner-badge ${member.status}`}>{member.role} · {member.status}</span><div className="owner-actions"><button type="button" onClick={() => moderateUser(member.id, member.status === 'banned' ? 'unban' : 'ban')}>{member.status === 'banned' ? 'Unban' : 'Ban'}</button><button type="button" onClick={() => moderateUser(member.id, member.timeoutUntil ? 'untimeout' : 'timeout', { timeoutMinutes: 10 })}>{member.timeoutUntil ? 'Remove timeout' : 'Timeout 10m'}</button><button type="button" onClick={() => moderateUser(member.id, member.role === 'member' ? 'rank' : 'unrank', { role: 'moderator' })}>{member.role === 'member' ? 'Rank moderator' : 'Unrank'}</button></div></article>)}</div></div></section>
       )}
 
       {settingsOpen && (
@@ -387,6 +378,7 @@ export default function Page() {
               <section className="settings-section"><div className="settings-section-title"><Palette /><div><h3>Appearance</h3><p>Set a custom color or background image.</p></div></div><label>Background color<input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} /></label><label className="file-button"><Upload /> Add background image<input type="file" accept="image/*" onChange={handleBackgroundImage} /></label></section>
               <section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Tab Cloak</h3><p>Change the browser title and favicon.</p></div></div><label>Website name<input value={cloakName} onChange={(e) => setCloakName(e.target.value)} /></label><label className="file-button"><Upload /> Add logo<input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = () => setCloakLogo(String(reader.result)); reader.readAsDataURL(file) } }} /></label><div className="cloak-presets">{['Google','Google Docs','Google Drive','Google Classroom','Google Slides','Google Sheets','IXL','Canvas','Gmail','Khan Academy','Clever','Schoology','Quizlet','Edpuzzle','Desmos','PowerSchool'].map((name) => <button type="button" key={name} onClick={() => setCloakName(name)}>{name}</button>)}</div></section>
               <section className="settings-section data-section"><div className="settings-section-title"><FileJson /><div><h3>Data</h3><p>Export or import your settings.</p></div></div><div className="data-actions"><button type="button" onClick={exportData}><Download /> Export</button><button type="button" onClick={() => importInput.current?.click()}><Upload /> Import</button><input ref={importInput} type="file" accept="application/json" onChange={importData} /></div></section>
+              {isOwner && <section className="settings-section owner-activation"><div className="settings-section-title"><ShieldAlert /><div><h3>Owner access</h3><p>Activate the community moderation panel.</p></div></div><button className="activate-owner" type="button" onClick={() => { setSettingsOpen(false); openOwnerPanel() }}>Activate OWNER panel</button></section>}
             </div>
             <button className="reset-settings" type="button" onClick={resetSettings}>Reset to Default</button>
           </div>
@@ -409,7 +401,7 @@ export default function Page() {
           <Show when="signed-in">
         <aside className="discord-shell" aria-label="Nuclear Academy online chat">
           <nav className="discord-servers" aria-label="Servers">
-            <button className="server-orb server-home" type="button" aria-label="Nuclear Academy">N</button>
+            <button className="server-orb server-home image-server-orb" type="button" aria-label="Nuclear Academy"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/download-removebg-preview%20%283%29-KG99VfxtzgULhEm8mRH6oFP4Lud4h7.png" alt="Nuclear Academy radiation logo" /></button>
             <span className="server-divider" />
             <button className="server-orb active-server" type="button" aria-label="Study Lounge">SL</button>
             <button className="server-orb add-server" type="button" aria-label="Add a server"><Plus aria-hidden="true" /></button>
@@ -419,21 +411,18 @@ export default function Page() {
             <div className="channel-search"><Search aria-hidden="true" /><span>Find a channel</span></div>
             <p className="channel-heading">TEXT CHANNELS <Plus aria-hidden="true" /></p>
             <button className="channel active-channel" type="button"><Hash aria-hidden="true" /><span>general</span></button>
-            <button className="channel" type="button"><Hash aria-hidden="true" /><span>homework-help</span></button>
-            <button className="channel" type="button"><Hash aria-hidden="true" /><span>study-tips</span></button>
             <p className="channel-heading voice-heading">VOICE CHANNELS <Plus aria-hidden="true" /></p>
             <button className={`channel ${voiceJoined ? 'active-channel' : ''}`} type="button" onClick={toggleVoice}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && <small className="voice-live">LIVE</small>}</button><button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}
             <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? 'In Study Room' : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
           </section>
           <section className="discord-chat">
-            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div><div className="chat-tools"><Bell aria-hidden="true" /><Pin aria-hidden="true" /><Users aria-hidden="true" /><HelpCircle aria-hidden="true" /></div></header>
+            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div></header>
             <div className="discord-messages" aria-live="polite">
               <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #general!</h1><p>This is the beginning of this channel.</p></div>
-              {chatMessages.map((message, index) => <article className="discord-message" key={`${message.name}-${index}`}><div className="message-avatar" style={{ background: message.color }}>{message.initials}</div><div><div className="message-meta"><strong>{message.name}</strong><time>{message.time}</time></div><p>{message.text}</p></div></article>)}
             </div>
             <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Message #general" aria-label="Message general channel" /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
           </section>
-          <aside className="discord-members"><div className="members-heading">ONLINE — 3</div><div className="member-row"><div className="message-avatar small" style={{ background: '#5865f2' }}>N</div><strong>Nova</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#eb459e' }}>M</div><strong>Maya</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#57f287' }}>A</div><strong>Alex</strong></div></aside>
+          <aside className="discord-members"><div className="members-heading">ONLINE — 3</div><div className="member-row"><div className="message-avatar small image-avatar"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/download-removebg-preview%20%283%29-KG99VfxtzgULhEm8mRH6oFP4Lud4h7.png" alt="Radiation emblem" /></div><strong>Nova</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#eb459e' }}>M</div><strong>Maya</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#57f287' }}>A</div><strong>Alex</strong></div></aside>
         </aside>
           </Show>
         </>
@@ -462,8 +451,8 @@ export default function Page() {
         <section className="catalog-overlay" aria-label={`${catalogCategory} directory`}>
           <div className="catalog-card">
             <div className="catalog-topbar"><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button><label className="catalog-search"><Search aria-hidden="true" /><input aria-label={`Search ${catalogCategory}`} placeholder="Search by name" value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} /><kbd>/</kbd></label><span className="catalog-spacer" /></div>
-            <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : catalogCategory === 'VMs' ? 'Launch a remote desktop workspace or read the Selkies setup guide.' : 'Open a favorite app in your browser.'}</p></div>
-            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : catalogCategory === 'VMs' ? vmLinks : gameLinks).filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+            <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : 'Open a favorite app in your browser.'}</p></div>
+            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
           </div>
         </section>
       )}
@@ -497,7 +486,6 @@ export default function Page() {
 {[
               ['Apps', LayoutGrid],
               ['Games', Gamepad2],
-              ['VMs', Monitor],
               ['AI', Sparkles],
               ['Chat', MessagesSquare],
             ].map(([category, Icon]) => (
