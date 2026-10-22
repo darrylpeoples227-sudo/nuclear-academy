@@ -93,11 +93,6 @@ export default function Page() {
   const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [assistantCategory, setAssistantCategory] = useState('help')
   const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState([
-    { name: 'Nova', initials: 'N', color: '#5865f2', text: 'Welcome to the Nuclear Academy community!', time: 'Today at 9:41 AM' },
-    { name: 'Maya', initials: 'M', color: '#eb459e', text: 'Hey everyone! Does anyone want to study together later?', time: 'Today at 9:43 AM' },
-    { name: 'Alex', initials: 'A', color: '#57f287', text: 'I’m in. I need to review the science chapter.', time: 'Today at 9:44 AM' },
-  ])
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -416,17 +411,14 @@ export default function Page() {
             <div className="channel-search"><Search aria-hidden="true" /><span>Find a channel</span></div>
             <p className="channel-heading">TEXT CHANNELS <Plus aria-hidden="true" /></p>
             <button className="channel active-channel" type="button"><Hash aria-hidden="true" /><span>general</span></button>
-            <button className="channel" type="button"><Hash aria-hidden="true" /><span>homework-help</span></button>
-            <button className="channel" type="button"><Hash aria-hidden="true" /><span>study-tips</span></button>
             <p className="channel-heading voice-heading">VOICE CHANNELS <Plus aria-hidden="true" /></p>
             <button className={`channel ${voiceJoined ? 'active-channel' : ''}`} type="button" onClick={toggleVoice}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && <small className="voice-live">LIVE</small>}</button><button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}
             <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? 'In Study Room' : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
           </section>
           <section className="discord-chat">
-            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div><div className="chat-tools"><Bell aria-hidden="true" /><Pin aria-hidden="true" /><Users aria-hidden="true" /><HelpCircle aria-hidden="true" /></div></header>
+            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div></header>
             <div className="discord-messages" aria-live="polite">
               <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #general!</h1><p>This is the beginning of this channel.</p></div>
-              {chatMessages.map((message, index) => <article className="discord-message" key={`${message.name}-${index}`}><div className="message-avatar" style={{ background: message.color }}>{message.initials}</div><div><div className="message-meta"><strong>{message.name}</strong><time>{message.time}</time></div><p>{message.text}</p></div></article>)}
             </div>
             <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Message #general" aria-label="Message general channel" /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
           </section>
