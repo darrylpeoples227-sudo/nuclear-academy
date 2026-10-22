@@ -74,6 +74,7 @@ export default function Page() {
   const [ownerOpen, setOwnerOpen] = useState(false)
   const [ownerUsers, setOwnerUsers] = useState<Array<{ id: string; email: string; name: string; role: string; status: string; timeoutUntil: string | null }>>([])
   const [ownerError, setOwnerError] = useState('')
+  const [ownerLoading, setOwnerLoading] = useState(false)
   const [profileName, setProfileName] = useState('You')
   const [profileImage, setProfileImage] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
@@ -249,10 +250,19 @@ export default function Page() {
   }
 
   async function openOwnerPanel() {
-    setOwnerOpen(true); setOwnerError('')
-    const response = await fetch('/api/owner/users')
-    if (!response.ok) { setOwnerError('Owner access could not be verified.'); return }
-    setOwnerUsers(await response.json())
+    setOwnerOpen(true)
+    setOwnerError('')
+    setOwnerLoading(true)
+    try {
+      const response = await fetch('/api/owner/users', { cache: 'no-store' })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Owner access could not be verified.')
+      setOwnerUsers(Array.isArray(data) ? data : [])
+    } catch (error) {
+      setOwnerError(error instanceof Error ? error.message : 'Owner access could not be verified.')
+    } finally {
+      setOwnerLoading(false)
+    }
   }
 
   async function moderateUser(userId: string, action: string, extra: Record<string, unknown> = {}) {
@@ -359,7 +369,7 @@ export default function Page() {
       {profileOpen && <section className="profile-modal" aria-label="Edit profile"><div className="profile-card"><button className="profile-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close profile editor"><X /></button><div className="profile-preview">{profileImage ? <img src={profileImage} alt="Profile preview" /> : profileName.slice(0, 1).toUpperCase()}</div><h2>Edit your profile</h2><label>Display name<input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={24} /></label><label className="profile-upload">Upload profile picture<input ref={profileInput} type="file" accept="image/*" onChange={updateProfileImage} /></label><button className="profile-save" type="button" onClick={() => setProfileOpen(false)}>Save profile</button></div></section>}
 
       {ownerOpen && isOwner && (
-        <section className="settings-overlay owner-overlay" aria-label="Owner panel"><div className="settings-panel owner-panel"><header className="settings-header"><div><span className="settings-kicker">OWNER CONTROL</span><h2>Community moderation</h2><p>Signed in as {user?.primaryEmailAddress?.emailAddress}</p></div><button type="button" className="settings-close" onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"><X /></button></header><div className="owner-tools"><div><strong>Message moderation</strong><p>Messages containing <code>message</code> are blocked by default.</p></div><span className="owner-status">Active</span></div>{ownerError && <p className="owner-error">{ownerError}</p>}<div className="owner-user-list">{ownerUsers.map((member) => <article className="owner-user" key={member.id}><div><strong>{member.name}</strong><small>{member.email}</small></div><span className={`owner-badge ${member.status}`}>{member.role} · {member.status}</span><div className="owner-actions"><button type="button" onClick={() => moderateUser(member.id, member.status === 'banned' ? 'unban' : 'ban')}>{member.status === 'banned' ? 'Unban' : 'Ban'}</button><button type="button" onClick={() => moderateUser(member.id, member.timeoutUntil ? 'untimeout' : 'timeout', { timeoutMinutes: 10 })}>{member.timeoutUntil ? 'Remove timeout' : 'Timeout 10m'}</button><button type="button" onClick={() => moderateUser(member.id, member.role === 'member' ? 'rank' : 'unrank', { role: 'moderator' })}>{member.role === 'member' ? 'Rank moderator' : 'Unrank'}</button></div></article>)}</div></div></section>
+        <section className="settings-overlay owner-overlay" aria-label="Owner panel"><div className="settings-panel owner-panel"><header className="settings-header"><div><span className="settings-kicker">OWNER CONTROL</span><h2>Community moderation</h2><p>Signed in as {user?.primaryEmailAddress?.emailAddress}</p></div><button type="button" className="settings-close" onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"><X /></button></header><div className="owner-tools"><div><strong>Message moderation</strong><p>Messages containing <code>message</code> are blocked by default.</p></div><span className="owner-status">Active</span></div>{ownerError && <p className="owner-error">{ownerError}</p>}{ownerLoading && <p className="owner-loading" role="status">Loading community members...</p>}{!ownerLoading && !ownerError && ownerUsers.length === 0 && <p className="owner-loading">No community members found.</p>}<div className="owner-user-list">{ownerUsers.map((member) => <article className="owner-user" key={member.id}><div><strong>{member.name}</strong><small>{member.email}</small></div><span className={`owner-badge ${member.status}`}>{member.role} · {member.status}</span><div className="owner-actions"><button type="button" onClick={() => moderateUser(member.id, member.status === 'banned' ? 'unban' : 'ban')}>{member.status === 'banned' ? 'Unban' : 'Ban'}</button><button type="button" onClick={() => moderateUser(member.id, member.timeoutUntil ? 'untimeout' : 'timeout', { timeoutMinutes: 10 })}>{member.timeoutUntil ? 'Remove timeout' : 'Timeout 10m'}</button><button type="button" onClick={() => moderateUser(member.id, member.role === 'member' ? 'rank' : 'unrank', { role: 'moderator' })}>{member.role === 'member' ? 'Rank moderator' : 'Unrank'}</button></div></article>)}</div></div></section>
       )}
 
       {settingsOpen && (
