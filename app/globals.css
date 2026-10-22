@@ -124,7 +124,7 @@ h1 { margin: 0; font-size: clamp(36px, 6vw, 58px); letter-spacing: -.055em; line
 .discord-servers { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px 0; background: #1e1f22; }
 .server-orb { width: 46px; height: 46px; border: 0; border-radius: 50%; background: #313338; color: #dbdee1; font-weight: 800; transition: border-radius .2s, background .2s; }
 .server-orb:hover, .active-server { border-radius: 16px; background: #5865f2; color: #fff; }
-.server-home { background: #5865f2; font-size: 20px; }
+.server-home { background: #5865f2; font-size: 20px; }.image-server-orb { overflow: hidden; padding: 0; }.image-server-orb img { width: 72%; height: 72%; object-fit: contain; }
 .server-home:hover { background: #4752c4; }
 .server-divider { width: 32px; height: 2px; background: #35363c; }
 .add-server { color: #23a559; background: #313338; }
