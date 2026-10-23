@@ -164,9 +164,12 @@ export default function Page() {
   }, [panicCombo, panicUrl, antiClose])
 
   useEffect(() => {
-    void startupSound.current?.play().catch(() => {
-      // Browsers may block autoplay until the first interaction.
-    })
+    const playStartupSound = () => {
+      void startupSound.current?.play().catch(() => {})
+    }
+    playStartupSound()
+    window.addEventListener('pointerdown', playStartupSound, { once: true })
+    return () => window.removeEventListener('pointerdown', playStartupSound)
   }, [])
 
   function closeBrowser() {
@@ -347,7 +350,7 @@ export default function Page() {
   }
 
   if (!isClient) {
-    return <main className="browser-app hydration-shell" aria-busy="true" />
+    return <main className="browser-app hydration-shell" aria-busy="true"><img className="startup-logo" src="/startup-logo.png" alt="Nuclear Academy startup logo" /></main>
   }
 
   return (
