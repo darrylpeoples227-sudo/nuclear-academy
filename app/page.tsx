@@ -38,6 +38,10 @@ import {
   X,
 } from 'lucide-react'
 
+const proxyEngines = [
+  ['scramjet', 'Scramjet (Main use)'], ['ultraviolet', 'Ultraviolet'], ['libcurl', 'libcurl'], ['epoxy', 'Epoxy'], ['bare', 'Bare'],
+]
+
 const suggestions = [
   { title: 'Ultraviolet', url: 'https://github.com/titaniumnetwork-dev/Ultraviolet-App', description: 'A sophisticated web proxy' },
   { title: 'Scramjet', url: 'https://github.com/MercuryWorkshop/scramjet', description: 'Modern web proxy technology' },
@@ -84,7 +88,7 @@ export default function Page() {
   const [voiceMuted, setVoiceMuted] = useState(false)
   const profileInput = useRef<HTMLInputElement>(null)
   const micStream = useRef<MediaStream | null>(null)
-  const [tabs, setTabs] = useState([{ id: 1, title: 'New tab', address: '', activeUrl: '' }])
+  const [tabs, setTabs] = useState([{ id: 1, title: 'New tab', address: '', activeUrl: '', history: [] as string[], historyIndex: -1 }])
   const [activeTabId, setActiveTabId] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
@@ -105,7 +109,7 @@ export default function Page() {
 
   function addNewTab() {
     const id = Date.now()
-    setTabs((currentTabs) => [...currentTabs, { id, title: 'New tab', address: '', activeUrl: '' }])
+    setTabs((currentTabs) => [...currentTabs, { id, title: 'New tab', address: '', activeUrl: '', history: [], historyIndex: -1 }])
     setActiveTabId(id)
   }
 
@@ -118,8 +122,13 @@ export default function Page() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [selectedBrowser, setSelectedBrowser] = useState('google')
+  const [proxyEngine, setProxyEngine] = useState('scramjet')
   const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | null>(null)
   const [catalogSearch, setCatalogSearch] = useState('')
+  const [customLinks, setCustomLinks] = useState<Array<[string, string, 'Apps' | 'Games']>>([])
+  const [customName, setCustomName] = useState('')
+  const [customUrl, setCustomUrl] = useState('')
+  const [customCategory, setCustomCategory] = useState<'Apps' | 'Games'>('Apps')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [panicUrl, setPanicUrl] = useState('https://www.google.com')
   const [panicCombo, setPanicCombo] = useState('Control+Shift+X')
@@ -180,13 +189,28 @@ export default function Page() {
     event.preventDefault()
     const nextUrl = normalizeAddress(address, selectedBrowser)
     if (!nextUrl) return
-    const proxiedUrl = `/api/proxy?url=${encodeURIComponent(nextUrl)}`
-    updateActiveTab({ activeUrl: proxiedUrl, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab' })
+    const proxiedUrl = `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(nextUrl)}`
+    const nextHistory = [...activeTab.history.slice(0, activeTab.historyIndex + 1), nextUrl]
+    updateActiveTab({ activeUrl: proxiedUrl, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab', history: nextHistory, historyIndex: nextHistory.length - 1 })
     setIsLoading(true)
     window.setTimeout(() => setIsLoading(false), 650)
   }
 
   function goBack() {
+    if (!activeTab || activeTab.historyIndex <= 0) return
+    const index = activeTab.historyIndex - 1
+    const nextUrl = activeTab.history[index]
+    updateActiveTab({ activeUrl: `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(nextUrl)}`, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab', historyIndex: index })
+  }
+
+  function goForward() {
+    if (!activeTab || activeTab.historyIndex >= activeTab.history.length - 1) return
+    const index = activeTab.historyIndex + 1
+    const nextUrl = activeTab.history[index]
+    updateActiveTab({ activeUrl: `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(nextUrl)}`, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab', historyIndex: index })
+  }
+
+  function returnToNewTab() {
     updateActiveTab({ activeUrl: '', address: '', title: 'New tab' })
   }
 
@@ -210,8 +234,9 @@ export default function Page() {
   }
 
   function openCatalogLink(url: string) {
-    const proxiedUrl = `/api/proxy?url=${encodeURIComponent(url)}`
-    updateActiveTab({ activeUrl: proxiedUrl, address: url, title: new URL(url).hostname || 'New tab' })
+    const proxiedUrl = `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(url)}`
+    const nextHistory = [...activeTab.history.slice(0, activeTab.historyIndex + 1), url]
+    updateActiveTab({ activeUrl: proxiedUrl, address: url, title: new URL(url).hostname || 'New tab', history: nextHistory, historyIndex: nextHistory.length - 1 })
     setCatalogCategory(null)
     setIsLoading(true)
     window.setTimeout(() => setIsLoading(false), 650)
@@ -346,8 +371,9 @@ export default function Page() {
         </div>
         <div className="toolbar">
           <div className="nav-actions" aria-label="Browser navigation">
-            <button type="button" aria-label="Back" onClick={goBack} disabled={!activeUrl}><ArrowLeft aria-hidden="true" /></button>
-            <button type="button" aria-label="Forward" disabled><ArrowRight aria-hidden="true" /></button>
+            <button type="button" aria-label="Back" onClick={goBack} disabled={!activeTab?.historyIndex || activeTab.historyIndex < 1}><ArrowLeft aria-hidden="true" /></button>
+            <button type="button" aria-label="Forward" onClick={goForward} disabled={!activeTab || activeTab.historyIndex >= activeTab.history.length - 1}><ArrowRight aria-hidden="true" /></button>
+            <button type="button" aria-label="Return to new tab" onClick={returnToNewTab} disabled={!activeUrl}><Globe2 aria-hidden="true" /></button>
             <button type="button" aria-label="Reload" onClick={goReload} disabled={!activeUrl}><RotateCw aria-hidden="true" className={isLoading ? 'spin' : undefined} /></button>
           </div>
           <form className="address-bar" onSubmit={navigate}>
@@ -375,11 +401,11 @@ export default function Page() {
             <div className="settings-grid">
               <section className="settings-section"><div className="settings-section-title"><ShieldAlert /><div><h3>Panic Button</h3><p>Use your key combo to leave instantly.</p></div></div><label>Redirect URL<input value={panicUrl} onChange={(e) => setPanicUrl(e.target.value)} placeholder="https://www.google.com" /></label><label>Key Combo<input value={panicCombo} onChange={(e) => setPanicCombo(e.target.value)} placeholder="Control+Shift+X" /></label><button className="panic-button" type="button" onClick={() => window.location.assign(panicUrl)}>Test Panic Button</button></section>
               <section className="settings-section"><div className="settings-section-title"><ShieldCheck /><div><h3>Safety</h3><p>Control how the browser can be closed.</p></div></div><label className="toggle-row"><span>Anti Close</span><input type="checkbox" checked={antiClose} onChange={(e) => setAntiClose(e.target.checked)} /><span className="toggle-ui" /></label></section>
-              <section className="settings-section"><div className="settings-section-title"><Search /><div><h3>Search Engine</h3><p>Choose the engine used for searches.</p></div></div><select className="settings-select" value={selectedBrowser} onChange={(e) => setSelectedBrowser(e.target.value)}><option value="google">Google</option><option value="duckduckgo">DuckDuckGo</option><option value="brave">Brave Search</option><option value="bing">Bing</option></select></section>
+              <section className="settings-section"><div className="settings-section-title"><Search /><div><h3>Search Engine</h3><p>Choose the engine used for searches.</p></div></div><select className="settings-select" value={selectedBrowser} onChange={(e) => setSelectedBrowser(e.target.value)}><option value="google">Google</option><option value="duckduckgo">DuckDuckGo</option><option value="brave">Brave Search</option><option value="bing">Bing</option></select></section><section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Browser proxy</h3><p>Choose the proxy engine for new navigations.</p></div></div><select className="settings-select" value={proxyEngine} onChange={(e) => setProxyEngine(e.target.value)}>{proxyEngines.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></section>
               <section className="settings-section"><div className="settings-section-title"><Palette /><div><h3>Appearance</h3><p>Set a custom color or background image.</p></div></div><label>Background color<input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} /></label><label className="file-button"><Upload /> Add background image<input type="file" accept="image/*" onChange={handleBackgroundImage} /></label></section>
               <section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Tab Cloak</h3><p>Change the browser title and favicon.</p></div></div><label>Website name<input value={cloakName} onChange={(e) => setCloakName(e.target.value)} /></label><label className="file-button"><Upload /> Add logo<input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = () => setCloakLogo(String(reader.result)); reader.readAsDataURL(file) } }} /></label><div className="cloak-presets">{['Google','Google Docs','Google Drive','Google Classroom','Google Slides','Google Sheets','IXL','Canvas','Gmail','Khan Academy','Clever','Schoology','Quizlet','Edpuzzle','Desmos','PowerSchool'].map((name) => <button type="button" key={name} onClick={() => setCloakName(name)}>{name}</button>)}</div></section>
               <section className="settings-section data-section"><div className="settings-section-title"><FileJson /><div><h3>Data</h3><p>Export or import your settings.</p></div></div><div className="data-actions"><button type="button" onClick={exportData}><Download /> Export</button><button type="button" onClick={() => importInput.current?.click()}><Upload /> Import</button><input ref={importInput} type="file" accept="application/json" onChange={importData} /></div></section>
-              {isOwner && <section className="settings-section owner-activation"><div className="settings-section-title"><ShieldAlert /><div><h3>Owner access</h3><p>Activate the community moderation panel.</p></div></div><button className="activate-owner" type="button" onClick={() => { setSettingsOpen(false); openOwnerPanel() }}>Activate OWNER panel</button></section>}
+              {isOwner && <section className="settings-section owner-activation"><div className="settings-section-title"><ShieldAlert /><div><h3>Owner access</h3><p>Activate moderation and customize Apps or Games.</p></div></div><button className="activate-owner" type="button" onClick={() => { setSettingsOpen(false); openOwnerPanel() }}>Activate OWNER panel</button><div className="custom-catalog-form"><input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="App or game name" /><input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)} placeholder="https://example.com" /><select value={customCategory} onChange={(e) => setCustomCategory(e.target.value as 'Apps' | 'Games')}><option>Apps</option><option>Games</option></select><button type="button" onClick={() => { if (customName.trim() && /^https?:\/\//i.test(customUrl)) { setCustomLinks((items) => [...items, [customName.trim(), customUrl.trim(), customCategory]]); setCustomName(''); setCustomUrl('') } }}>Add custom item</button></div></section>}
             </div>
             <button className="reset-settings" type="button" onClick={resetSettings}>Reset to Default</button>
           </div>
@@ -453,14 +479,12 @@ export default function Page() {
           <div className="catalog-card">
             <div className="catalog-topbar"><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button><label className="catalog-search"><Search aria-hidden="true" /><input aria-label={`Search ${catalogCategory}`} placeholder="Search by name" value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} /><kbd>/</kbd></label><span className="catalog-spacer" /></div>
             <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : 'Open a favorite app in your browser.'}</p></div>
-            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+            <div className="catalog-grid">{[...(catalogCategory === 'Apps' ? appLinks : gameLinks), ...customLinks.filter(([,, category]) => category === catalogCategory).map(([name, url]) => [name, url] as [string, string])].filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
           </div>
         </section>
       )}
 
       <section className="browser-page" aria-label="New tab page" style={{ backgroundColor, backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="page-glow glow-one" />
-        <div className="page-glow glow-two" />
         {activeUrl ? (
           <div className="browser-view" aria-label="Browsing content">
             <iframe
