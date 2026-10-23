@@ -6,7 +6,8 @@ const OWNER_EMAIL = 'darrylpeoples227@gmail.com'
 async function requireOwner() {
   const { userId } = await auth()
   if (!userId) return { error: NextResponse.json({ error: 'Sign in required.' }, { status: 401 }) }
-  const user = await clerkClient.users.getUser(userId)
+  const client = await clerkClient()
+  const user = await client.users.getUser(userId)
   const email = user.emailAddresses.find((item) => item.id === user.primaryEmailAddressId)?.emailAddress
   if (email?.toLowerCase() !== OWNER_EMAIL) return { error: NextResponse.json({ error: 'Owner access required.' }, { status: 403 }) }
   return { user }
@@ -15,7 +16,8 @@ async function requireOwner() {
 export async function GET() {
   const result = await requireOwner()
   if ('error' in result) return result.error
-  const users = await clerkClient.users.getUserList({ limit: 100, orderBy: '-created_at' })
+  const client = await clerkClient()
+  const users = await client.users.getUserList({ limit: 100, orderBy: '-created_at' })
   return NextResponse.json(users.data.map((user) => ({
     id: user.id,
     email: user.emailAddresses.find((item) => item.id === user.primaryEmailAddressId)?.emailAddress ?? 'No email',
@@ -31,7 +33,8 @@ export async function PATCH(request: Request) {
   if ('error' in result) return result.error
   const body = await request.json() as { userId?: string; action?: string; role?: string; timeoutMinutes?: number }
   if (!body.userId || !body.action) return NextResponse.json({ error: 'Missing moderation action.' }, { status: 400 })
-  const target = await clerkClient.users.getUser(body.userId)
+  const client = await clerkClient()
+  const target = await client.users.getUser(body.userId)
   const currentMetadata = target.publicMetadata ?? {}
   const updates: Record<string, unknown> = { ...currentMetadata }
   if (body.action === 'ban') updates.status = 'banned'
@@ -40,6 +43,6 @@ export async function PATCH(request: Request) {
   if (body.action === 'untimeout') updates.timeoutUntil = null
   if (body.action === 'rank' && body.role) updates.role = body.role
   if (body.action === 'unrank') updates.role = 'member'
-  await clerkClient.users.updateUser(body.userId, { publicMetadata: updates })
+  await client.users.updateUser(body.userId, { publicMetadata: updates })
   return NextResponse.json({ ok: true })
 }
