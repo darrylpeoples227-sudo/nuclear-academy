@@ -38,6 +38,10 @@ import {
   X,
 } from 'lucide-react'
 
+const proxyEngines = [
+  ['scramjet', 'Scramjet (Main use)'], ['ultraviolet', 'Ultraviolet'], ['libcurl', 'libcurl'], ['epoxy', 'Epoxy'], ['bare', 'Bare'],
+]
+
 const suggestions = [
   { title: 'Ultraviolet', url: 'https://github.com/titaniumnetwork-dev/Ultraviolet-App', description: 'A sophisticated web proxy' },
   { title: 'Scramjet', url: 'https://github.com/MercuryWorkshop/scramjet', description: 'Modern web proxy technology' },
@@ -49,6 +53,7 @@ const appLinks = [
 ]
 
 const gameLinks = [
+  ['Eaglercraft', 'https://blobs.vusercontent.net/blob/EaglercraftX_1.8_u50_Offline_Signed%20%283%29%20%281%29-7dA24t83cniGjn5CHJQwVRMeCPQTNx.html'],
   ['Yohoho io', 'https://yohoho.io/'], ['Slither io', 'http://slither.com/io'], ['Agar io', 'https://agar.io/'], ['Paper io', 'https://paperio.site/'], ['OVO', 'https://www.dedragames.com/games/ovo/1.1/'], ['OVO 2', 'https://dedragames.com/games/ovo2/0.2alpha/'], ['OVO 3', 'https://dedragames.com/games/ovo3/'], ['DOOM', 'https://swordslasher.com/games/doom/'], ['DOOM 2', 'https://swordslasher.com/games/doom2/'], ['Run', 'https://swordslasher.com/games/run1/'], ['Run 2', 'https://swordslasher.com/games/run2/'], ['Run 3', 'https://swordslasher.com/games/run3/'], ['Cookie Clicker', 'https://swordslasher.com/games/cookieclicker/'], ['Angry Birds', 'https://swordslasher.com/games/angrybirds/index.html'],
   ['2048', 'https://swordslasher.com/games/zeldalampshade/'], ['Duck Life', 'https://swordslasher.com/games/ducklife/'], ['Duck Life 2', 'https://swordslasher.com/games/ducklife2/'], ['Duck Life 3', 'https://swordslasher.com/games/ducklife3/'], ['Duck Life 4', 'https://swordslasher.com/games/ducklife4/'], ['Undertale', 'https://swordslasher.com/games/undertale/src/'], ['Deltarune', 'https://swordslasher.com/games/undertale/deltarune/'], ['N-gon', 'https://swordslasher.com/games/ngon/'], ['Super Mario 64', 'https://swordslasher.com/games/sm64/src/'], ['DNS Emulator', 'https://swordslasher.com/games/nds/'], ['Sonic 2', 'https://swordslasher.com/games/sonic2/'], ['GameBoy', 'https://swordslasher.com/games/gameboy/'], ['Ultimate Flash Sonic', 'https://swordslasher.com/games/ultimateflashsonic/'], ['Melon Sandbox', 'https://74.ip.nowgg.fun/apps/playducky/7199/melon-sandbox.html'], ['Roblox', 'https://74.ip.nowgg.fun/apps/a/19900/b.html'], ['Stumble Guys', 'https://74.ip.nowgg.fun/apps/a/10011/b.html'], ['Call Of Duty', 'https://74.ip.nowgg.fun/apps/a/10008/b.html'], ['Rocket League', 'https://74.ip.nowgg.fun/apps/a/10008/b.html'], ['Fortnite', 'https://nowgg.fun/apps/aptoide/5874/aptoide.html?deep_link=aptoidesearch://com.epicgames.fortnite'], ['Buckshot Roulette', 'https://swordslasher.com/games/buckshot/buckshot/'], ['Half Life', 'https://swordslasher.com/games/src/xash.html'], ['Super Meat Boy', 'https://swordslasher.com/games/bloonTDs/bloonTD2/'], ['FB@WG', 'https://amhooman.github.io/fireboywatergirl/game.html'], ['FB@WG 2', 'https://swordslasher.com/games/fbwg2/'], ['FB@WG 3', 'https://swordslasher.com/games/fbwg3/'], ['FB@WG 4', 'https://swordslasher.com/games/fbwg4/'], ['FB@WG 5', 'https://swordslasher.com/games/fbwg5/'], ['Slope', 'https://swordslasher.com/games/slope/'], ['Drive Mad', 'https://swordslasher.com/games/drive-mad/index.html'], ['Bit Life', 'https://swordslasher.com/games/bitlife/'], ['Wordle', 'https://swordslasher.com/games/wordle/#daily'], ['Retro Bowl', 'https://swordslasher.com/games/retrobowl/'], ['There Is Game', 'https://swordslasher.com/games/thereisnogame/alternate/871000/test.html'], ['FNF GO', 'https://www.fnfgo.com/'], ['Pac-Man', 'https://swordslasher.com/games/pacman2/'], ['Slope 2', 'https://playfreegamesonlinewithoutdownloading.github.io/slope-2-game.html'], ['Baldis Basics', 'https://playfreegamesonlinewithoutdownloading.github.io/baldis-basics.html'], ['Bad Time Simulator', 'https://playfreegamesonlinewithoutdownloading.github.io/bad-time-simulator.html'], ['Slope 3', 'https://playfreegamesonlinewithoutdownloading.github.io/slope-3.html'], ['Tiny Fishing', 'https://playfreegamesonlinewithoutdownloading.github.io/tiny-fishing.html'], ['Escape Road', 'https://playfreegamesonlinewithoutdownloading.github.io/escape-road.html'], ['Escape Road 2', 'https://playfreegamesonlinewithoutdownloading.github.io/escape-road-2.html'], ['Yandex games', 'https://yandex.com/games/'], ['Nowgg fun', 'https://nowgg.fun/'], ['Crazy games', 'https://www.crazygames.com/'], ['CoolMath Games', 'https://www.coolmathgames.com/'], ['Neal Fun', 'https://neal.fun/'], ['Mist', 'https://s3.amazonaws.com/misting2/index.html#/'], ['Space Waves', 'https://spacewaves.io/'], ['Ragdoll Hit', 'https://ragdollhit2.org/'], ['Ragdoll Archers', 'https://ragdollarchers2.io/'], ['Geometry Dash', 'https://geometrylitepc.net/'], ['Addicting Games', 'https://addictinggames.com/'], ['Y8 Games', 'https://y8.com/'], ['Poki', 'https://poki.com/'], ['Google Feud', 'https://googlefeud.com/'], 
 ]
@@ -72,7 +77,7 @@ export default function Page() {
   const { user } = useUser()
   const isOwner = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === 'darrylpeoples227@gmail.com'
   const [ownerOpen, setOwnerOpen] = useState(false)
-  const [ownerUsers, setOwnerUsers] = useState<Array<{ id: string; email: string; name: string; role: string; status: string; timeoutUntil: string | null }>>([])
+  const [ownerUsers, setOwnerUsers] = useState<Array<{ id: string; email: string; name: string; role: string; status: string; timeoutUntil: string | null; bannedUntil: string | null; voiceMuted: boolean }>>([])
   const [ownerError, setOwnerError] = useState('')
   const [ownerLoading, setOwnerLoading] = useState(false)
   const [profileName, setProfileName] = useState('You')
@@ -83,7 +88,7 @@ export default function Page() {
   const [voiceMuted, setVoiceMuted] = useState(false)
   const profileInput = useRef<HTMLInputElement>(null)
   const micStream = useRef<MediaStream | null>(null)
-  const [tabs, setTabs] = useState([{ id: 1, title: 'New tab', address: '', activeUrl: '' }])
+  const [tabs, setTabs] = useState([{ id: 1, title: 'New tab', address: '', activeUrl: '', history: [] as string[], historyIndex: -1 }])
   const [activeTabId, setActiveTabId] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
@@ -104,7 +109,7 @@ export default function Page() {
 
   function addNewTab() {
     const id = Date.now()
-    setTabs((currentTabs) => [...currentTabs, { id, title: 'New tab', address: '', activeUrl: '' }])
+    setTabs((currentTabs) => [...currentTabs, { id, title: 'New tab', address: '', activeUrl: '', history: [], historyIndex: -1 }])
     setActiveTabId(id)
   }
 
@@ -117,8 +122,13 @@ export default function Page() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [selectedBrowser, setSelectedBrowser] = useState('google')
+  const [proxyEngine, setProxyEngine] = useState('scramjet')
   const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | null>(null)
   const [catalogSearch, setCatalogSearch] = useState('')
+  const [customLinks, setCustomLinks] = useState<Array<[string, string, 'Apps' | 'Games']>>([])
+  const [customName, setCustomName] = useState('')
+  const [customUrl, setCustomUrl] = useState('')
+  const [customCategory, setCustomCategory] = useState<'Apps' | 'Games'>('Apps')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [panicUrl, setPanicUrl] = useState('https://www.google.com')
   const [panicCombo, setPanicCombo] = useState('Control+Shift+X')
@@ -154,9 +164,12 @@ export default function Page() {
   }, [panicCombo, panicUrl, antiClose])
 
   useEffect(() => {
-    void startupSound.current?.play().catch(() => {
-      // Browsers may block autoplay until the first interaction.
-    })
+    const playStartupSound = () => {
+      void startupSound.current?.play().catch(() => {})
+    }
+    playStartupSound()
+    window.addEventListener('pointerdown', playStartupSound, { once: true })
+    return () => window.removeEventListener('pointerdown', playStartupSound)
   }, [])
 
   function closeBrowser() {
@@ -179,13 +192,28 @@ export default function Page() {
     event.preventDefault()
     const nextUrl = normalizeAddress(address, selectedBrowser)
     if (!nextUrl) return
-    const proxiedUrl = `/api/proxy?url=${encodeURIComponent(nextUrl)}`
-    updateActiveTab({ activeUrl: proxiedUrl, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab' })
+    const proxiedUrl = `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(nextUrl)}`
+    const nextHistory = [...activeTab.history.slice(0, activeTab.historyIndex + 1), nextUrl]
+    updateActiveTab({ activeUrl: proxiedUrl, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab', history: nextHistory, historyIndex: nextHistory.length - 1 })
     setIsLoading(true)
     window.setTimeout(() => setIsLoading(false), 650)
   }
 
   function goBack() {
+    if (!activeTab || activeTab.historyIndex <= 0) return
+    const index = activeTab.historyIndex - 1
+    const nextUrl = activeTab.history[index]
+    updateActiveTab({ activeUrl: `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(nextUrl)}`, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab', historyIndex: index })
+  }
+
+  function goForward() {
+    if (!activeTab || activeTab.historyIndex >= activeTab.history.length - 1) return
+    const index = activeTab.historyIndex + 1
+    const nextUrl = activeTab.history[index]
+    updateActiveTab({ activeUrl: `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(nextUrl)}`, address: nextUrl, title: new URL(nextUrl).hostname || 'New tab', historyIndex: index })
+  }
+
+  function returnToNewTab() {
     updateActiveTab({ activeUrl: '', address: '', title: 'New tab' })
   }
 
@@ -209,8 +237,9 @@ export default function Page() {
   }
 
   function openCatalogLink(url: string) {
-    const proxiedUrl = `/api/proxy?url=${encodeURIComponent(url)}`
-    updateActiveTab({ activeUrl: proxiedUrl, address: url, title: new URL(url).hostname || 'New tab' })
+    const proxiedUrl = `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(url)}`
+    const nextHistory = [...activeTab.history.slice(0, activeTab.historyIndex + 1), url]
+    updateActiveTab({ activeUrl: proxiedUrl, address: url, title: new URL(url).hostname || 'New tab', history: nextHistory, historyIndex: nextHistory.length - 1 })
     setCatalogCategory(null)
     setIsLoading(true)
     window.setTimeout(() => setIsLoading(false), 650)
@@ -321,7 +350,7 @@ export default function Page() {
   }
 
   if (!isClient) {
-    return <main className="browser-app hydration-shell" aria-busy="true" />
+    return <main className="browser-app hydration-shell" aria-busy="true"><img className="startup-logo" src="/startup-logo.png" alt="Nuclear Academy startup logo" /></main>
   }
 
   return (
@@ -345,8 +374,9 @@ export default function Page() {
         </div>
         <div className="toolbar">
           <div className="nav-actions" aria-label="Browser navigation">
-            <button type="button" aria-label="Back" onClick={goBack} disabled={!activeUrl}><ArrowLeft aria-hidden="true" /></button>
-            <button type="button" aria-label="Forward" disabled><ArrowRight aria-hidden="true" /></button>
+            <button type="button" aria-label="Back" onClick={goBack} disabled={!activeTab?.historyIndex || activeTab.historyIndex < 1}><ArrowLeft aria-hidden="true" /></button>
+            <button type="button" aria-label="Forward" onClick={goForward} disabled={!activeTab || activeTab.historyIndex >= activeTab.history.length - 1}><ArrowRight aria-hidden="true" /></button>
+            <button type="button" aria-label="Return to new tab" onClick={returnToNewTab} disabled={!activeUrl}><Globe2 aria-hidden="true" /></button>
             <button type="button" aria-label="Reload" onClick={goReload} disabled={!activeUrl}><RotateCw aria-hidden="true" className={isLoading ? 'spin' : undefined} /></button>
           </div>
           <form className="address-bar" onSubmit={navigate}>
@@ -364,7 +394,7 @@ export default function Page() {
       {profileOpen && <section className="profile-modal" aria-label="Edit profile"><div className="profile-card"><button className="profile-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close profile editor"><X /></button><div className="profile-preview">{profileImage ? <img src={profileImage} alt="Profile preview" /> : profileName.slice(0, 1).toUpperCase()}</div><h2>Edit your profile</h2><label>Display name<input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={24} /></label><label className="profile-upload">Upload profile picture<input ref={profileInput} type="file" accept="image/*" onChange={updateProfileImage} /></label><button className="profile-save" type="button" onClick={() => setProfileOpen(false)}>Save profile</button></div></section>}
 
       {ownerOpen && isOwner && (
-        <section className="settings-overlay owner-overlay" aria-label="Owner panel"><div className="settings-panel owner-panel"><header className="settings-header"><div><span className="settings-kicker">OWNER CONTROL</span><h2>Community moderation</h2><p>Signed in as {user?.primaryEmailAddress?.emailAddress}</p></div><button type="button" className="settings-close" onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"><X /></button></header><div className="owner-tools"><div><strong>Message moderation</strong><p>Messages containing <code>message</code> are blocked by default.</p></div><span className="owner-status">Active</span></div>{ownerError && <p className="owner-error">{ownerError}</p>}{ownerLoading && <p className="owner-loading" role="status">Loading community members...</p>}{!ownerLoading && !ownerError && ownerUsers.length === 0 && <p className="owner-loading">No community members found.</p>}<div className="owner-user-list">{ownerUsers.map((member) => <article className="owner-user" key={member.id}><div><strong>{member.name}</strong><small>{member.email}</small></div><span className={`owner-badge ${member.status}`}>{member.role} · {member.status}</span><div className="owner-actions"><button type="button" onClick={() => moderateUser(member.id, member.status === 'banned' ? 'unban' : 'ban')}>{member.status === 'banned' ? 'Unban' : 'Ban'}</button><button type="button" onClick={() => moderateUser(member.id, member.timeoutUntil ? 'untimeout' : 'timeout', { timeoutMinutes: 10 })}>{member.timeoutUntil ? 'Remove timeout' : 'Timeout 10m'}</button><button type="button" onClick={() => moderateUser(member.id, member.role === 'member' ? 'rank' : 'unrank', { role: 'moderator' })}>{member.role === 'member' ? 'Rank moderator' : 'Unrank'}</button></div></article>)}</div></div></section>
+        <section className="settings-overlay owner-overlay" aria-label="Owner panel"><div className="settings-panel owner-panel"><header className="settings-header"><div><span className="settings-kicker">OWNER CONTROL</span><h2>Community moderation</h2><p>Signed in as {user?.primaryEmailAddress?.emailAddress}</p></div><button type="button" className="settings-close" onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"><X /></button></header><div className="owner-tools"><div><strong>Message moderation</strong><p>Messages containing <code>message</code> are blocked by default.</p></div><span className="owner-status">Active</span></div>{ownerError && <p className="owner-error">{ownerError}</p>}{ownerLoading && <p className="owner-loading" role="status">Loading community members...</p>}{!ownerLoading && !ownerError && ownerUsers.length === 0 && <p className="owner-loading">No community members found.</p>}<div className="owner-user-list">{ownerUsers.map((member) => <article className="owner-user" key={member.id}><div><strong>{member.name}</strong><small>{member.email}</small></div><span className={`owner-badge ${member.status}`}>{member.role} · {member.status}{member.voiceMuted ? ' · voice muted' : ''}</span><div className="owner-actions">{['admin', 'developer'].includes(member.role) && <button type="button" onClick={() => moderateUser(member.id, member.status === 'banned' ? 'unban' : 'ban', { banDays: member.role === 'developer' ? 28 : 10 })}>{member.status === 'banned' ? 'Unban' : member.role === 'developer' ? 'Ban 4 weeks' : 'Ban 10 days'}</button>}{['mod', 'admin', 'developer'].includes(member.role) && <button type="button" onClick={() => moderateUser(member.id, member.timeoutUntil ? 'untimeout' : 'timeout', { timeoutMinutes: member.role === 'developer' ? 1440 : 60 })}>{member.timeoutUntil ? 'Remove timeout' : member.role === 'developer' ? 'Timeout 24h' : 'Timeout 1h'}</button>}<select className="owner-rank-select" value={member.role} onChange={(event) => moderateUser(member.id, event.target.value === 'member' ? 'unrank' : 'rank', { role: event.target.value })} aria-label={`Rank ${member.name}`}><option value="member">Member</option><option value="mod">Mod</option><option value="admin">Admin</option><option value="developer">Developer</option></select>{member.role !== 'member' && <button type="button" onClick={() => moderateUser(member.id, member.voiceMuted ? 'unmute' : 'mute')}>{member.voiceMuted ? 'Unmute voice' : 'Mute voice'}</button>}{['admin', 'developer'].includes(member.role) && <button type="button" onClick={() => moderateUser(member.id, 'delete-messages')}>Delete chats</button>}{member.role === 'developer' && <button type="button" className="danger-action" onClick={() => { if (window.confirm(`Delete ${member.name}'s account?`)) moderateUser(member.id, 'delete-account') }}>Delete account</button>}</div></article>)}</div></div></section>
       )}
 
       {settingsOpen && (
@@ -374,11 +404,11 @@ export default function Page() {
             <div className="settings-grid">
               <section className="settings-section"><div className="settings-section-title"><ShieldAlert /><div><h3>Panic Button</h3><p>Use your key combo to leave instantly.</p></div></div><label>Redirect URL<input value={panicUrl} onChange={(e) => setPanicUrl(e.target.value)} placeholder="https://www.google.com" /></label><label>Key Combo<input value={panicCombo} onChange={(e) => setPanicCombo(e.target.value)} placeholder="Control+Shift+X" /></label><button className="panic-button" type="button" onClick={() => window.location.assign(panicUrl)}>Test Panic Button</button></section>
               <section className="settings-section"><div className="settings-section-title"><ShieldCheck /><div><h3>Safety</h3><p>Control how the browser can be closed.</p></div></div><label className="toggle-row"><span>Anti Close</span><input type="checkbox" checked={antiClose} onChange={(e) => setAntiClose(e.target.checked)} /><span className="toggle-ui" /></label></section>
-              <section className="settings-section"><div className="settings-section-title"><Search /><div><h3>Search Engine</h3><p>Choose the engine used for searches.</p></div></div><select className="settings-select" value={selectedBrowser} onChange={(e) => setSelectedBrowser(e.target.value)}><option value="google">Google</option><option value="duckduckgo">DuckDuckGo</option><option value="brave">Brave Search</option><option value="bing">Bing</option></select></section>
+              <section className="settings-section"><div className="settings-section-title"><Search /><div><h3>Search Engine</h3><p>Choose the engine used for searches.</p></div></div><select className="settings-select" value={selectedBrowser} onChange={(e) => setSelectedBrowser(e.target.value)}><option value="google">Google</option><option value="duckduckgo">DuckDuckGo</option><option value="brave">Brave Search</option><option value="bing">Bing</option></select></section><section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Browser proxy</h3><p>Choose the proxy engine for new navigations.</p></div></div><select className="settings-select" value={proxyEngine} onChange={(e) => setProxyEngine(e.target.value)}>{proxyEngines.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></section>
               <section className="settings-section"><div className="settings-section-title"><Palette /><div><h3>Appearance</h3><p>Set a custom color or background image.</p></div></div><label>Background color<input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} /></label><label className="file-button"><Upload /> Add background image<input type="file" accept="image/*" onChange={handleBackgroundImage} /></label></section>
               <section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Tab Cloak</h3><p>Change the browser title and favicon.</p></div></div><label>Website name<input value={cloakName} onChange={(e) => setCloakName(e.target.value)} /></label><label className="file-button"><Upload /> Add logo<input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = () => setCloakLogo(String(reader.result)); reader.readAsDataURL(file) } }} /></label><div className="cloak-presets">{['Google','Google Docs','Google Drive','Google Classroom','Google Slides','Google Sheets','IXL','Canvas','Gmail','Khan Academy','Clever','Schoology','Quizlet','Edpuzzle','Desmos','PowerSchool'].map((name) => <button type="button" key={name} onClick={() => setCloakName(name)}>{name}</button>)}</div></section>
               <section className="settings-section data-section"><div className="settings-section-title"><FileJson /><div><h3>Data</h3><p>Export or import your settings.</p></div></div><div className="data-actions"><button type="button" onClick={exportData}><Download /> Export</button><button type="button" onClick={() => importInput.current?.click()}><Upload /> Import</button><input ref={importInput} type="file" accept="application/json" onChange={importData} /></div></section>
-              {isOwner && <section className="settings-section owner-activation"><div className="settings-section-title"><ShieldAlert /><div><h3>Owner access</h3><p>Activate the community moderation panel.</p></div></div><button className="activate-owner" type="button" onClick={() => { setSettingsOpen(false); openOwnerPanel() }}>Activate OWNER panel</button></section>}
+              {isOwner && <section className="settings-section owner-activation"><div className="settings-section-title"><ShieldAlert /><div><h3>Owner access</h3><p>Activate moderation and customize Apps or Games.</p></div></div><button className="activate-owner" type="button" onClick={() => { setSettingsOpen(false); openOwnerPanel() }}>Activate OWNER panel</button><div className="custom-catalog-form"><input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="App or game name" /><input value={customUrl} onChange={(e) => setCustomUrl(e.target.value)} placeholder="https://example.com" /><select value={customCategory} onChange={(e) => setCustomCategory(e.target.value as 'Apps' | 'Games')}><option>Apps</option><option>Games</option></select><button type="button" onClick={() => { if (customName.trim() && /^https?:\/\//i.test(customUrl)) { setCustomLinks((items) => [...items, [customName.trim(), customUrl.trim(), customCategory]]); setCustomName(''); setCustomUrl('') } }}>Add custom item</button></div></section>}
             </div>
             <button className="reset-settings" type="button" onClick={resetSettings}>Reset to Default</button>
           </div>
@@ -452,14 +482,12 @@ export default function Page() {
           <div className="catalog-card">
             <div className="catalog-topbar"><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button><label className="catalog-search"><Search aria-hidden="true" /><input aria-label={`Search ${catalogCategory}`} placeholder="Search by name" value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} /><kbd>/</kbd></label><span className="catalog-spacer" /></div>
             <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : 'Open a favorite app in your browser.'}</p></div>
-            <div className="catalog-grid">{(catalogCategory === 'Apps' ? appLinks : gameLinks).filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+            <div className="catalog-grid">{[...(catalogCategory === 'Apps' ? appLinks : gameLinks), ...customLinks.filter(([,, category]) => category === catalogCategory).map(([name, url]) => [name, url] as [string, string])].filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
           </div>
         </section>
       )}
 
       <section className="browser-page" aria-label="New tab page" style={{ backgroundColor, backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="page-glow glow-one" />
-        <div className="page-glow glow-two" />
         {activeUrl ? (
           <div className="browser-view" aria-label="Browsing content">
             <iframe
