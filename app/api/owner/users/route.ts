@@ -25,24 +25,38 @@ export async function GET() {
     role: (user.publicMetadata.role as string | undefined) ?? 'member',
     status: (user.publicMetadata.status as string | undefined) ?? 'active',
     timeoutUntil: (user.publicMetadata.timeoutUntil as string | undefined) ?? null,
+    bannedUntil: (user.publicMetadata.bannedUntil as string | undefined) ?? null,
+    voiceMuted: user.publicMetadata.voiceMuted === true,
   })))
 }
 
 export async function PATCH(request: Request) {
   const result = await requireOwner()
   if ('error' in result) return result.error
-  const body = await request.json() as { userId?: string; action?: string; role?: string; timeoutMinutes?: number }
+  const body = await request.json() as { userId?: string; action?: string; role?: string; timeoutMinutes?: number; banDays?: number }
   if (!body.userId || !body.action) return NextResponse.json({ error: 'Missing moderation action.' }, { status: 400 })
   const client = await clerkClient()
   const target = await client.users.getUser(body.userId)
   const currentMetadata = target.publicMetadata ?? {}
   const updates: Record<string, unknown> = { ...currentMetadata }
-  if (body.action === 'ban') updates.status = 'banned'
-  if (body.action === 'unban') updates.status = 'active'
+  if (body.userId === result.user.id) return NextResponse.json({ error: 'The owner cannot be moderated.' }, { status: 403 })
+  if (body.action === 'ban') {
+    const days = Math.max(1, Math.min(body.banDays ?? 10, 28))
+    updates.status = 'banned'
+    updates.bannedUntil = new Date(Date.now() + days * 86400000).toISOString()
+  }
+  if (body.action === 'unban') { updates.status = 'active'; updates.bannedUntil = null }
   if (body.action === 'timeout') updates.timeoutUntil = new Date(Date.now() + Math.max(1, Math.min(body.timeoutMinutes ?? 10, 1440)) * 60_000).toISOString()
   if (body.action === 'untimeout') updates.timeoutUntil = null
-  if (body.action === 'rank' && body.role) updates.role = body.role
+  if (body.action === 'rank' && ['mod', 'admin', 'developer'].includes(body.role ?? '')) updates.role = body.role
   if (body.action === 'unrank') updates.role = 'member'
+  if (body.action === 'mute') updates.voiceMuted = true
+  if (body.action === 'unmute') updates.voiceMuted = false
+  if (body.action === 'delete-messages') updates.messagesDeletedAt = new Date().toISOString()
+  if (body.action === 'delete-account') {
+    await client.users.deleteUser(body.userId)
+    return NextResponse.json({ ok: true })
+  }
   await client.users.updateUser(body.userId, { publicMetadata: updates })
   return NextResponse.json({ ok: true })
 }
