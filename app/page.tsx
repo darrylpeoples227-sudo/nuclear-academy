@@ -373,7 +373,7 @@ export default function Page() {
   }
 
   if (!isClient || loadingProgress < 100) {
-    return <main className="browser-app hydration-shell" aria-busy="true"><div className="loading-card"><img className="startup-logo" src={loadingImage} alt="Nuclear Academy loading artwork" /><p>Loading Nuclear Academy</p><div className="loading-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={loadingProgress}><span style={{ width: `${loadingProgress}%` }} /></div><strong>{loadingProgress}%</strong></div></main>
+    return <main className="browser-app hydration-shell" aria-busy="true"><div className="loading-card"><img className="startup-logo" src={loadingImage} alt="Nuclear Academy loading artwork" /><div className="loading-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={loadingProgress}><span style={{ width: `${loadingProgress}%` }} /></div><strong>{loadingProgress}%</strong></div></main>
   }
 
   return (
