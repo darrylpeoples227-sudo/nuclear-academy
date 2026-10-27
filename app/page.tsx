@@ -74,6 +74,9 @@ function normalizeAddress(value: string, engine: string) {
 
 export default function Page() {
   const [isClient, setIsClient] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [loadingImage, setLoadingImage] = useState('/nuclear-waiting.png')
+  const [showWelcomePdf, setShowWelcomePdf] = useState(false)
   const { user } = useUser()
   const isOwner = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === 'darrylpeoples227@gmail.com'
   const [ownerOpen, setOwnerOpen] = useState(false)
@@ -143,6 +146,20 @@ export default function Page() {
 
   useEffect(() => {
     setIsClient(true)
+    const images = ['/nuclear-waiting.png', '/nuclear-pattern.png', '/nuclear-welcome.png']
+    let progress = 0
+    const timer = window.setInterval(() => {
+      progress = Math.min(progress + 5, 100)
+      setLoadingProgress(progress)
+      if (progress >= 100) {
+        window.clearInterval(timer)
+        setShowWelcomePdf(true)
+      }
+    }, 80)
+    const imageTimer = window.setInterval(() => {
+      setLoadingImage(images[Math.floor(Math.random() * images.length)])
+    }, 5000)
+    return () => { window.clearInterval(timer); window.clearInterval(imageTimer) }
   }, [])
 
   useEffect(() => {
@@ -162,6 +179,12 @@ export default function Page() {
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('beforeunload', onBeforeUnload) }
   }, [panicCombo, panicUrl, antiClose])
+
+  useEffect(() => {
+    if (!showWelcomePdf) return
+    const fadeTimer = window.setTimeout(() => setShowWelcomePdf(false), 5000)
+    return () => window.clearTimeout(fadeTimer)
+  }, [showWelcomePdf])
 
   useEffect(() => {
     const playStartupSound = () => {
@@ -349,8 +372,8 @@ export default function Page() {
     }
   }
 
-  if (!isClient) {
-    return <main className="browser-app hydration-shell" aria-busy="true"><img className="startup-logo" src="/startup-logo.png" alt="Nuclear Academy startup logo" /></main>
+  if (!isClient || loadingProgress < 100) {
+    return <main className="browser-app hydration-shell" aria-busy="true"><div className="loading-card"><img className="startup-logo" src={loadingImage} alt="Nuclear Academy loading artwork" /><p>Loading Nuclear Academy</p><div className="loading-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={loadingProgress}><span style={{ width: `${loadingProgress}%` }} /></div><strong>{loadingProgress}%</strong></div></main>
   }
 
   return (
@@ -527,6 +550,7 @@ export default function Page() {
         )}
       </section>
 
+      {showWelcomePdf && <div className="welcome-pdf-overlay" role="dialog" aria-label="INDEV V5 welcome"><iframe src="/indev-v5.pdf" title="INDEV V5 welcome PDF" /></div>}
       <audio ref={startupSound} src="/wing5.wav" preload="auto" />
       <audio ref={exitSound} src="/wing4.wav" preload="auto" />
 
