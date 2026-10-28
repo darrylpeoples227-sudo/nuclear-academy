@@ -188,8 +188,6 @@ export default function Page() {
       void startupSound.current?.play().catch(() => {})
     }
     playStartupSound()
-    window.addEventListener('pointerdown', playStartupSound, { once: true })
-    return () => window.removeEventListener('pointerdown', playStartupSound)
   }, [loadingProgress])
 
   function closeBrowser() {
