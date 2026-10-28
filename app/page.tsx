@@ -75,8 +75,8 @@ function normalizeAddress(value: string, engine: string) {
 export default function Page() {
   const [isClient, setIsClient] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
-  const loadingImages = ['/welcome-1.png', '/welcome-2.png', '/welcome-3.png', '/welcome-4.png', '/welcome-5.png', '/welcome-6.png']
-  const [loadingImage, setLoadingImage] = useState(loadingImages[0])
+  const loadingImages = ['/nuclear-pattern.png', '/welcome-1.png', '/welcome-2.png', '/welcome-3.png', '/welcome-4.png', '/welcome-5.png', '/welcome-6.png']
+  const [loadingImage, setLoadingImage] = useState('/nuclear-pattern.png')
   const [previousLoadingImage, setPreviousLoadingImage] = useState<string | null>(null)
   const [showWelcomePdf, setShowWelcomePdf] = useState(false)
   const { user } = useUser()
