@@ -75,9 +75,8 @@ function normalizeAddress(value: string, engine: string) {
 export default function Page() {
   const [isClient, setIsClient] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
-  const loadingImages = ['/nuclear-pattern.png', '/welcome-1.png', '/welcome-2.png', '/welcome-3.png', '/welcome-4.png', '/welcome-5.png', '/welcome-6.png']
-  const [loadingImage, setLoadingImage] = useState('/nuclear-pattern.png')
-  const [previousLoadingImage, setPreviousLoadingImage] = useState<string | null>(null)
+  const loadingImages = ['/join-1.png', '/join-2.png', '/join-3.png', '/join-4.png', '/join-5.png', '/join-6.png']
+  const [loadingImage, setLoadingImage] = useState(loadingImages[0])
   const [showWelcomePdf, setShowWelcomePdf] = useState(false)
   const { user } = useUser()
   const isOwner = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === 'darrylpeoples227@gmail.com'
@@ -157,12 +156,8 @@ export default function Page() {
         setShowWelcomePdf(true)
       }
     }, 80)
-    const imageTimer = window.setInterval(() => {
-      setPreviousLoadingImage(loadingImage)
-      setLoadingImage(loadingImages[Math.floor(Math.random() * loadingImages.length)])
-      window.setTimeout(() => setPreviousLoadingImage(null), 1200)
-    }, 5000)
-    return () => { window.clearInterval(timer); window.clearInterval(imageTimer) }
+    setLoadingImage(loadingImages[Math.floor(Math.random() * loadingImages.length)])
+    return () => window.clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -376,7 +371,7 @@ export default function Page() {
   }
 
   if (!isClient || loadingProgress < 100) {
-    return <main className="browser-app hydration-shell" aria-busy="true"><div className="loading-card">{previousLoadingImage && <img className="startup-logo startup-logo-previous" src={previousLoadingImage} alt="" aria-hidden="true" />}{<img className="startup-logo startup-logo-current" src={loadingImage} alt="Nuclear Academy loading artwork" />}<div className="loading-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={loadingProgress}><span style={{ width: `${loadingProgress}%` }} /></div><strong>{loadingProgress}%</strong></div></main>
+    return <main className="browser-app hydration-shell" aria-busy="true"><div className="loading-card"><img className="startup-logo startup-logo-current" src={loadingImage} alt="Nuclear Academy loading artwork" /><div className="loading-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={loadingProgress}><span style={{ width: `${loadingProgress}%` }} /></div><strong>{loadingProgress}%</strong></div></main>
   }
 
   return (
