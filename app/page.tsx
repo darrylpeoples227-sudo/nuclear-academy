@@ -183,13 +183,14 @@ export default function Page() {
   }, [showWelcomePdf])
 
   useEffect(() => {
+    if (loadingProgress < 100) return
     const playStartupSound = () => {
       void startupSound.current?.play().catch(() => {})
     }
     playStartupSound()
     window.addEventListener('pointerdown', playStartupSound, { once: true })
     return () => window.removeEventListener('pointerdown', playStartupSound)
-  }, [])
+  }, [loadingProgress])
 
   function closeBrowser() {
     setIsExiting(true)
