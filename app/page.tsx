@@ -101,7 +101,8 @@ export default function Page() {
   const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [assistantCategory, setAssistantCategory] = useState('help')
   const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState<{ name: string; initials: string; color: string; text: string; time: string }[]>([])
+  const [chatMessages, setChatMessages] = useState<{ name: string; initials: string; color: string; text: string; time: string; avatarUrl?: string | null }[]>([])
+  const [chatLoading, setChatLoading] = useState(false)
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -242,14 +243,30 @@ export default function Page() {
     window.setTimeout(() => setIsLoading(false), 400)
   }
 
+  async function loadChatMessages() {
+    setChatLoading(true)
+    try {
+      const response = await fetch('/api/chat', { cache: 'no-store' })
+      if (!response.ok) throw new Error('Could not load chat')
+      const data = await response.json()
+      setChatMessages(data.messages ?? [])
+    } catch {
+      setOwnerError('Chat history could not be loaded. Please try again.')
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
   function browseCategory(category: string) {
     if (category === 'Apps' || category === 'Games') {
       setCatalogCategory(category)
       return
     }
     if (category === 'AI' || category === 'Chat') {
-      setAssistantMode(category === 'AI' ? 'ai' : 'chat')
+      const mode = category === 'AI' ? 'ai' : 'chat'
+      setAssistantMode(mode)
       setAssistantOpen(true)
+      if (mode === 'chat' && user) void loadChatMessages()
       return
     }
     updateActiveTab({ address: category })
@@ -339,13 +356,23 @@ export default function Page() {
     const reader = new FileReader(); reader.onload = () => setBackgroundImage(String(reader.result)); reader.readAsDataURL(file)
   }
 
-  function sendChatMessage(event: FormEvent<HTMLFormElement>) {
+  async function sendChatMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const text = chatInput.trim()
-    if (!text) return
+    if (!text || chatLoading) return
     if (/\bmessage\b/i.test(text)) { setOwnerError('That word is blocked by message moderation.'); return }
-    setChatMessages((messages) => [...messages, { name: 'You', initials: 'Y', color: '#00aff4', text, time: 'Just now' }])
-    setChatInput('')
+    setChatLoading(true)
+    try {
+      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, avatarUrl: profileImage }) })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not save message')
+      setChatMessages((messages) => [...messages, data.message])
+      setChatInput('')
+    } catch {
+      setOwnerError('Your message could not be saved. Please try again.')
+    } finally {
+      setChatLoading(false)
+    }
   }
 
   async function askAssistant(event: FormEvent<HTMLFormElement>) {
@@ -470,7 +497,7 @@ export default function Page() {
               <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #general!</h1><p>This is the beginning of this channel.</p></div>
               {chatMessages.map((message, index) => (
                 <article className="chat-message" key={`${message.time}-${index}`}>
-                  <div className="message-avatar small" style={{ background: message.color }}>{message.initials}</div>
+                  <div className={`message-avatar small ${message.avatarUrl ? 'image-avatar' : ''}`} style={{ background: message.color }}>{message.avatarUrl ? <img src={message.avatarUrl} alt={`${message.name}'s avatar`} /> : message.initials}</div>
                   <div><div className="message-meta"><strong>{message.name}</strong><time>{message.time}</time></div><p>{message.text}</p></div>
                 </article>
               ))}
