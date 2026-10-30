@@ -477,13 +477,13 @@ export default function Page() {
           <Show when="signed-in">
         <aside className="discord-shell" aria-label="Nuclear Academy online chat">
           <nav className="discord-servers" aria-label="Servers">
-            <button className="server-orb server-home" type="button" aria-label="Nuclear Academy">N</button>
+            <button className="server-orb server-home image-server-orb" type="button" aria-label="Nuclear Academy"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/download-removebg-preview%20%283%29-KG99VfxtzgULhEm8mRH6oFP4Lud4h7.png" alt="Nuclear Academy radiation logo" /></button>
             <span className="server-divider" />
-            <button className="server-orb active-server image-server-orb" type="button" aria-label="Global Server"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202026-10-30%207.41.18%20PM-4s1vm01zGjXiQparbOdN2Z1XEM2Lbb.png" alt="Global Server globe logo" /></button>
+            <button className="server-orb active-server" type="button" aria-label="Study Lounge">SL</button>
             <button className="server-orb add-server" type="button" aria-label="Add a server"><Plus aria-hidden="true" /></button>
           </nav>
           <section className="discord-channels">
-            <div className="discord-server-title"><strong>Global Server</strong><button type="button" aria-label="Close chat" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
+            <div className="discord-server-title"><strong>Study Lounge</strong><button type="button" aria-label="Close chat" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
             <div className="channel-search"><Search aria-hidden="true" /><span>Find a channel</span></div>
             <p className="channel-heading">TEXT CHANNELS <Plus aria-hidden="true" /></p>
             <button className="channel active-channel" type="button"><Hash aria-hidden="true" /><span>general</span></button>
