@@ -477,9 +477,9 @@ export default function Page() {
           <Show when="signed-in">
         <aside className="discord-shell" aria-label="Nuclear Academy online chat">
           <nav className="discord-servers" aria-label="Servers">
-            <button className="server-orb server-home image-server-orb" type="button" aria-label="Global Server"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/globe-4whnE9z2bi4bY3BempK4LNJ6xUaqsK.png" alt="Global Server globe logo" /></button>
+            <button className="server-orb server-home" type="button" aria-label="Nuclear Academy">N</button>
             <span className="server-divider" />
-            <button className="server-orb active-server" type="button" aria-label="Global Server"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/globe-4whnE9z2bi4bY3BempK4LNJ6xUaqsK.png" alt="" /></button>
+            <button className="server-orb active-server image-server-orb" type="button" aria-label="Global Server"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202026-10-30%207.41.18%20PM-4s1vm01zGjXiQparbOdN2Z1XEM2Lbb.png" alt="Global Server globe logo" /></button>
             <button className="server-orb add-server" type="button" aria-label="Add a server"><Plus aria-hidden="true" /></button>
           </nav>
           <section className="discord-channels">
