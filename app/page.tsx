@@ -74,6 +74,9 @@ function normalizeAddress(value: string, engine: string) {
 
 export default function Page() {
   const [isClient, setIsClient] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const loadingImage = '/nuclear-pattern.png'
+  const [showWelcomePdf, setShowWelcomePdf] = useState(false)
   const { user } = useUser()
   const isOwner = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === 'darrylpeoples227@gmail.com'
   const [ownerOpen, setOwnerOpen] = useState(false)
@@ -98,6 +101,8 @@ export default function Page() {
   const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [assistantCategory, setAssistantCategory] = useState('help')
   const [chatInput, setChatInput] = useState('')
+  const [chatMessages, setChatMessages] = useState<{ name: string; initials: string; color: string; text: string; time: string; avatarUrl?: string | null }[]>([])
+  const [chatLoading, setChatLoading] = useState(false)
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -143,6 +148,16 @@ export default function Page() {
 
   useEffect(() => {
     setIsClient(true)
+    let progress = 0
+    const timer = window.setInterval(() => {
+      progress = Math.min(progress + 5, 100)
+      setLoadingProgress(progress)
+      if (progress >= 100) {
+        window.clearInterval(timer)
+        setShowWelcomePdf(true)
+      }
+    }, 80)
+    return () => window.clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -164,13 +179,18 @@ export default function Page() {
   }, [panicCombo, panicUrl, antiClose])
 
   useEffect(() => {
+    if (!showWelcomePdf) return
+    const fadeTimer = window.setTimeout(() => setShowWelcomePdf(false), 5000)
+    return () => window.clearTimeout(fadeTimer)
+  }, [showWelcomePdf])
+
+  useEffect(() => {
+    if (loadingProgress < 100) return
     const playStartupSound = () => {
       void startupSound.current?.play().catch(() => {})
     }
     playStartupSound()
-    window.addEventListener('pointerdown', playStartupSound, { once: true })
-    return () => window.removeEventListener('pointerdown', playStartupSound)
-  }, [])
+  }, [loadingProgress])
 
   function closeBrowser() {
     setIsExiting(true)
@@ -223,14 +243,30 @@ export default function Page() {
     window.setTimeout(() => setIsLoading(false), 400)
   }
 
+  async function loadChatMessages() {
+    setChatLoading(true)
+    try {
+      const response = await fetch('/api/chat', { cache: 'no-store' })
+      if (!response.ok) throw new Error('Could not load chat')
+      const data = await response.json()
+      setChatMessages(data.messages ?? [])
+    } catch {
+      setOwnerError('Chat history could not be loaded. Please try again.')
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
   function browseCategory(category: string) {
     if (category === 'Apps' || category === 'Games') {
       setCatalogCategory(category)
       return
     }
     if (category === 'AI' || category === 'Chat') {
-      setAssistantMode(category === 'AI' ? 'ai' : 'chat')
+      const mode = category === 'AI' ? 'ai' : 'chat'
+      setAssistantMode(mode)
       setAssistantOpen(true)
+      if (mode === 'chat' && user) void loadChatMessages()
       return
     }
     updateActiveTab({ address: category })
@@ -320,13 +356,23 @@ export default function Page() {
     const reader = new FileReader(); reader.onload = () => setBackgroundImage(String(reader.result)); reader.readAsDataURL(file)
   }
 
-  function sendChatMessage(event: FormEvent<HTMLFormElement>) {
+  async function sendChatMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const text = chatInput.trim()
-    if (!text) return
+    if (!text || chatLoading) return
     if (/\bmessage\b/i.test(text)) { setOwnerError('That word is blocked by message moderation.'); return }
-    setChatMessages((messages) => [...messages, { name: 'You', initials: 'Y', color: '#00aff4', text, time: 'Just now' }])
-    setChatInput('')
+    setChatLoading(true)
+    try {
+      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, avatarUrl: profileImage }) })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not save message')
+      setChatMessages((messages) => [...messages, data.message])
+      setChatInput('')
+    } catch {
+      setOwnerError('Your message could not be saved. Please try again.')
+    } finally {
+      setChatLoading(false)
+    }
   }
 
   async function askAssistant(event: FormEvent<HTMLFormElement>) {
@@ -349,8 +395,8 @@ export default function Page() {
     }
   }
 
-  if (!isClient) {
-    return <main className="browser-app hydration-shell" aria-busy="true"><img className="startup-logo" src="/startup-logo.png" alt="Nuclear Academy startup logo" /></main>
+  if (!isClient || loadingProgress < 100) {
+    return <main className="browser-app hydration-shell" aria-busy="true"><div className="loading-card"><img className="startup-logo" src={loadingImage} alt="Nuclear Academy loading artwork" /><div className="loading-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={loadingProgress}><span style={{ width: `${loadingProgress}%` }} /></div><strong>{loadingProgress}%</strong></div></main>
   }
 
   return (
@@ -421,7 +467,7 @@ export default function Page() {
             <aside className="chat-auth-gate" aria-label="Sign in to chat">
               <div className="chat-auth-card">
                 <div className="ai-orb">N</div>
-                <h2>Join the Study Lounge</h2>
+                <h2>Join the Global Server</h2>
                 <p>Sign in or create an account before chatting online, joining servers, or sharing invite codes.</p>
                 <div className="chat-auth-actions"><SignInButton mode="modal"><button type="button" className="auth-primary">Sign in</button></SignInButton><SignUpButton mode="modal"><button type="button" className="auth-secondary">Create account</button></SignUpButton></div>
                 <button type="button" className="auth-dismiss" onClick={() => setAssistantOpen(false)}>Maybe later</button>
@@ -431,13 +477,13 @@ export default function Page() {
           <Show when="signed-in">
         <aside className="discord-shell" aria-label="Nuclear Academy online chat">
           <nav className="discord-servers" aria-label="Servers">
-            <button className="server-orb server-home image-server-orb" type="button" aria-label="Nuclear Academy"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/download-removebg-preview%20%283%29-KG99VfxtzgULhEm8mRH6oFP4Lud4h7.png" alt="Nuclear Academy radiation logo" /></button>
+            <button className="server-orb server-home image-server-orb" type="button" aria-label="Global Server"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/globe-CLJOGSxPw2gyQEofBtww7S1Xq8btqG.png" alt="Global Server globe logo" /></button>
             <span className="server-divider" />
-            <button className="server-orb active-server" type="button" aria-label="Study Lounge">SL</button>
+            <button className="server-orb active-server" type="button" aria-label="Global Server"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/globe-CLJOGSxPw2gyQEofBtww7S1Xq8btqG.png" alt="" /></button>
             <button className="server-orb add-server" type="button" aria-label="Add a server"><Plus aria-hidden="true" /></button>
           </nav>
           <section className="discord-channels">
-            <div className="discord-server-title"><strong>Study Lounge</strong><button type="button" aria-label="Close chat" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
+            <div className="discord-server-title"><strong>Global Server</strong><button type="button" aria-label="Close chat" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
             <div className="channel-search"><Search aria-hidden="true" /><span>Find a channel</span></div>
             <p className="channel-heading">TEXT CHANNELS <Plus aria-hidden="true" /></p>
             <button className="channel active-channel" type="button"><Hash aria-hidden="true" /><span>general</span></button>
@@ -449,6 +495,12 @@ export default function Page() {
             <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div></header>
             <div className="discord-messages" aria-live="polite">
               <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #general!</h1><p>This is the beginning of this channel.</p></div>
+              {chatMessages.map((message, index) => (
+                <article className="chat-message" key={`${message.time}-${index}`}>
+                  <div className={`message-avatar small ${message.avatarUrl ? 'image-avatar' : ''}`} style={{ background: message.color }}>{message.avatarUrl ? <img src={message.avatarUrl} alt={`${message.name}'s avatar`} /> : message.initials}</div>
+                  <div><div className="message-meta"><strong>{message.name}</strong><time>{message.time}</time></div><p>{message.text}</p></div>
+                </article>
+              ))}
             </div>
             <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Message #general" aria-label="Message general channel" /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
           </section>
@@ -527,6 +579,7 @@ export default function Page() {
         )}
       </section>
 
+      {showWelcomePdf && <div className="welcome-pdf-overlay" role="dialog" aria-label="INDEV V5 welcome"><iframe src="/indev-v5.pdf" title="INDEV V5 welcome PDF" /></div>}
       <audio ref={startupSound} src="/wing5.wav" preload="auto" />
       <audio ref={exitSound} src="/wing4.wav" preload="auto" />
 
