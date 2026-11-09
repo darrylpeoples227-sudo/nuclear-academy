@@ -504,7 +504,7 @@ export default function Page() {
             </div>
             <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Message #general" aria-label="Message general channel" /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
           </section>
-          <aside className="discord-members"><div className="members-heading">ONLINE — 3</div><div className="member-row"><div className="message-avatar small image-avatar"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/download-removebg-preview%20%283%29-KG99VfxtzgULhEm8mRH6oFP4Lud4h7.png" alt="Radiation emblem" /></div><strong>Nova</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#eb459e' }}>M</div><strong>Maya</strong></div><div className="member-row"><div className="message-avatar small" style={{ background: '#57f287' }}>A</div><strong>Alex</strong></div></aside>
+          <aside className="discord-members"><div className="members-heading">ONLINE — 0</div></aside>
         </aside>
           </Show>
         </>
