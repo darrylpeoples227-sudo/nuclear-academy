@@ -504,7 +504,7 @@ export default function Page() {
             </div>
             <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Message #general" aria-label="Message general channel" /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
           </section>
-          <aside className="discord-members"><div className="members-heading">ONLINE — 0</div></aside>
+          <aside className="discord-members"><div className="members-heading">ONLINE — 0</div><div className="members-heading">OFFLINE — 0</div></aside>
         </aside>
           </Show>
         </>
