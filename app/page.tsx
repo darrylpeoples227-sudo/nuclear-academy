@@ -94,6 +94,7 @@ export default function Page() {
   const [privateRoomCode, setPrivateRoomCode] = useState<string | null>(null)
   const [voiceJoined, setVoiceJoined] = useState(false)
   const [voiceMuted, setVoiceMuted] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const profileInput = useRef<HTMLInputElement>(null)
   const micStream = useRef<MediaStream | null>(null)
   const [tabs, setTabs] = useState([{ id: 1, title: 'New tab', address: '', activeUrl: '', history: [] as string[], historyIndex: -1 }])
@@ -339,6 +340,30 @@ export default function Page() {
     setVoiceMuted(nextMuted)
   }
 
+  useEffect(() => {
+    if (!voiceJoined || voiceMuted || !micStream.current) {
+      setIsSpeaking(false)
+      return
+    }
+    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextClass) return
+    const audioContext = new AudioContextClass()
+    const analyser = audioContext.createAnalyser()
+    analyser.fftSize = 256
+    const source = audioContext.createMediaStreamSource(micStream.current)
+    const levels = new Uint8Array(analyser.fftSize)
+    source.connect(analyser)
+    let frame = 0
+    const sample = () => {
+      analyser.getByteTimeDomainData(levels)
+      const volume = levels.reduce((sum, value) => sum + Math.abs(value - 128), 0) / levels.length
+      setIsSpeaking(volume > 7)
+      frame = requestAnimationFrame(sample)
+    }
+    sample()
+    return () => { cancelAnimationFrame(frame); source.disconnect(); analyser.disconnect(); void audioContext.close() }
+  }, [voiceJoined, voiceMuted])
+
   async function openOwnerPanel() {
     setOwnerOpen(true)
     setOwnerError('')
@@ -528,7 +553,7 @@ export default function Page() {
           <section className={`discord-chat ${voiceJoined ? 'voice-room-active' : ''}`}>
             {voiceJoined && <div className="zoom-room" aria-label="Study Room video call">
               <header className="zoom-room-header"><span className="zoom-meeting-dot"><Info aria-hidden="true" /></span><strong>STU-Darryl Peoples&apos;s Study Room</strong></header>
-              <div className="zoom-stage"><div className="zoom-participant"><div className="zoom-avatar">{profileImage ? <img src={profileImage} alt="" /> : profileName.slice(0, 1).toUpperCase()}</div><span>{profileName}</span></div><span className="zoom-name-tag">{profileName}</span></div>
+              <div className="zoom-stage"><div className={`zoom-participant ${isSpeaking ? 'is-speaking' : ''}`}><div className="zoom-avatar">{profileImage ? <img src={profileImage} alt="" /> : profileName.slice(0, 1).toUpperCase()}</div><span>{profileName}</span><span className="mic-status" aria-live="polite">{voiceMuted ? 'Muted' : isSpeaking ? 'Speaking' : 'Not speaking'}</span></div><span className="zoom-name-tag">{profileName}</span></div>
               <nav className="zoom-controls" aria-label="Study Room controls">
                 <button type="button" onClick={toggleMute} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}><span>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</span><small>{voiceMuted ? 'Unmute' : 'Mute'}</small></button>
                 <button type="button" aria-label="Start or stop video"><span><Video aria-hidden="true" /></span><small>Video</small></button>
