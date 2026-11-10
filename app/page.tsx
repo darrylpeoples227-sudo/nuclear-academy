@@ -15,6 +15,8 @@ import {
   Hash,
   Headphones,
   HelpCircle,
+  Heart,
+  Info,
   LayoutGrid,
   LockKeyhole,
   Menu,
@@ -22,12 +24,14 @@ import {
   MicOff,
   Mic,
   Palette,
+  PhoneOff,
   Pin,
   Plus,
   RotateCw,
   Search,
   Send,
   Settings,
+  Share2,
   ShieldAlert,
   ShieldCheck,
   Smile,
@@ -35,6 +39,7 @@ import {
   Star,
   Upload,
   Users,
+  Video,
   X,
 } from 'lucide-react'
 
@@ -491,7 +496,21 @@ export default function Page() {
             <button className={`channel ${voiceJoined ? 'active-channel' : ''}`} type="button" onClick={toggleVoice}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && <small className="voice-live">LIVE</small>}</button><button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}
             <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? 'In Study Room' : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
           </section>
-          <section className="discord-chat">
+          <section className={`discord-chat ${voiceJoined ? 'voice-room-active' : ''}`}>
+            {voiceJoined && <div className="zoom-room" aria-label="Study Room video call">
+              <header className="zoom-room-header"><span className="zoom-meeting-dot"><Info aria-hidden="true" /></span><strong>STU-Darryl Peoples&apos;s Study Room</strong></header>
+              <div className="zoom-stage"><div className="zoom-participant"><div className="zoom-avatar">{profileImage ? <img src={profileImage} alt="" /> : profileName.slice(0, 1).toUpperCase()}</div><span>{profileName}</span></div><span className="zoom-name-tag">{profileName}</span></div>
+              <nav className="zoom-controls" aria-label="Study Room controls">
+                <button type="button" onClick={toggleMute} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}><span>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</span><small>{voiceMuted ? 'Unmute' : 'Mute'}</small></button>
+                <button type="button" aria-label="Start or stop video"><span><Video aria-hidden="true" /></span><small>Video</small></button>
+                <button type="button" aria-label="View participants"><span><Users aria-hidden="true" /></span><small>Participants</small></button>
+                <button type="button" aria-label="Open chat"><span><MessagesSquare aria-hidden="true" /></span><small>Chat</small></button>
+                <button type="button" aria-label="React"><span><Heart aria-hidden="true" /></span><small>React</small></button>
+                <button type="button" aria-label="Share screen"><span><Share2 aria-hidden="true" /></span><small>Share</small></button>
+                <button type="button" aria-label="Host tools"><span><ShieldCheck aria-hidden="true" /></span><small>Host tools</small></button>
+                <button className="zoom-end" type="button" onClick={toggleVoice} aria-label="Leave Study Room"><span><PhoneOff aria-hidden="true" /></span><small>End</small></button>
+              </nav>
+            </div>}
             <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div></header>
             <div className="discord-messages" aria-live="polite">
               <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #general!</h1><p>This is the beginning of this channel.</p></div>
