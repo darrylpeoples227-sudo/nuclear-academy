@@ -143,6 +143,7 @@ export default function Page() {
   const [panicUrl, setPanicUrl] = useState('https://www.google.com')
   const [panicCombo, setPanicCombo] = useState('Control+Shift+X')
   const [antiClose, setAntiClose] = useState(false)
+  const [customCursor, setCustomCursor] = useState(false)
   const [backgroundColor, setBackgroundColor] = useState('#7eff84')
   const [backgroundImage, setBackgroundImage] = useState('')
   const [cloakName, setCloakName] = useState('Nuclear Academy')
@@ -337,7 +338,7 @@ export default function Page() {
   }
 
   function exportData() {
-    const payload = { panicUrl, panicCombo, antiClose, backgroundColor, backgroundImage, cloakName, cloakLogo, selectedBrowser }
+    const payload = { panicUrl, panicCombo, antiClose, customCursor, backgroundColor, backgroundImage, cloakName, cloakLogo, selectedBrowser }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'nuclear-academy-settings.json'; link.click(); URL.revokeObjectURL(link.href)
   }
@@ -346,13 +347,13 @@ export default function Page() {
     const file = event.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => { try { const data = JSON.parse(String(reader.result)); setPanicUrl(data.panicUrl ?? panicUrl); setPanicCombo(data.panicCombo ?? panicCombo); setAntiClose(Boolean(data.antiClose)); setBackgroundColor(data.backgroundColor ?? backgroundColor); setBackgroundImage(data.backgroundImage ?? ''); setCloakName(data.cloakName ?? cloakName); setCloakLogo(data.cloakLogo ?? cloakLogo); setSelectedBrowser(data.selectedBrowser ?? selectedBrowser) } catch { window.alert('That settings file is not valid JSON.') } }
+    reader.onload = () => { try { const data = JSON.parse(String(reader.result)); setPanicUrl(data.panicUrl ?? panicUrl); setPanicCombo(data.panicCombo ?? panicCombo); setAntiClose(Boolean(data.antiClose)); setCustomCursor(Boolean(data.customCursor)); setBackgroundColor(data.backgroundColor ?? backgroundColor); setBackgroundImage(data.backgroundImage ?? ''); setCloakName(data.cloakName ?? cloakName); setCloakLogo(data.cloakLogo ?? cloakLogo); setSelectedBrowser(data.selectedBrowser ?? selectedBrowser) } catch { window.alert('That settings file is not valid JSON.') } }
     reader.readAsText(file)
     event.target.value = ''
   }
 
   function resetSettings() {
-    setPanicUrl('https://www.google.com'); setPanicCombo('Control+Shift+X'); setAntiClose(false); setBackgroundColor('#7eff84'); setBackgroundImage(''); setCloakName('Nuclear Academy'); setCloakLogo('/nuclear-academy-emblem.png'); setSelectedBrowser('google')
+    setPanicUrl('https://www.google.com'); setPanicCombo('Control+Shift+X'); setAntiClose(false); setCustomCursor(false); setBackgroundColor('#7eff84'); setBackgroundImage(''); setCloakName('Nuclear Academy'); setCloakLogo('/nuclear-academy-emblem.png'); setSelectedBrowser('google')
   }
 
   function handleBackgroundImage(event: React.ChangeEvent<HTMLInputElement>) {
@@ -405,7 +406,7 @@ export default function Page() {
   }
 
   return (
-    <main className="browser-app" style={{ backgroundColor, backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <main className={`browser-app ${customCursor ? 'custom-cursor-enabled' : ''}`} style={{ backgroundColor, backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <header className="browser-chrome">
         <div className="tab-strip">
           {tabs.map((tab) => (
@@ -454,7 +455,7 @@ export default function Page() {
             <header className="settings-header"><div><span className="settings-kicker">NUCLEAR ACADEMY</span><h2>Settings</h2><p>Customize your browser workspace.</p></div><button type="button" className="settings-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings"><X /></button></header>
             <div className="settings-grid">
               <section className="settings-section"><div className="settings-section-title"><ShieldAlert /><div><h3>Panic Button</h3><p>Use your key combo to leave instantly.</p></div></div><label>Redirect URL<input value={panicUrl} onChange={(e) => setPanicUrl(e.target.value)} placeholder="https://www.google.com" /></label><label>Key Combo<input value={panicCombo} onChange={(e) => setPanicCombo(e.target.value)} placeholder="Control+Shift+X" /></label><button className="panic-button" type="button" onClick={() => window.location.assign(panicUrl)}>Test Panic Button</button></section>
-              <section className="settings-section"><div className="settings-section-title"><ShieldCheck /><div><h3>Safety</h3><p>Control how the browser can be closed.</p></div></div><label className="toggle-row"><span>Anti Close</span><input type="checkbox" checked={antiClose} onChange={(e) => setAntiClose(e.target.checked)} /><span className="toggle-ui" /></label></section>
+              <section className="settings-section"><div className="settings-section-title"><ShieldCheck /><div><h3>Safety</h3><p>Control how the browser can be closed.</p></div></div><label className="toggle-row"><span>Anti Close</span><input type="checkbox" checked={antiClose} onChange={(e) => setAntiClose(e.target.checked)} /><span className="toggle-ui" /></label><label className="toggle-row"><span>Show custom cursor</span><input type="checkbox" checked={customCursor} onChange={(e) => setCustomCursor(e.target.checked)} /><span className="toggle-ui" /></label></section>
               <section className="settings-section"><div className="settings-section-title"><Search /><div><h3>Search Engine</h3><p>Choose the engine used for searches.</p></div></div><select className="settings-select" value={selectedBrowser} onChange={(e) => setSelectedBrowser(e.target.value)}><option value="google">Google</option><option value="duckduckgo">DuckDuckGo</option><option value="brave">Brave Search</option><option value="bing">Bing</option></select></section><section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Browser proxy</h3><p>Choose the proxy engine for new navigations.</p></div></div><select className="settings-select" value={proxyEngine} onChange={(e) => setProxyEngine(e.target.value)}>{proxyEngines.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></section>
               <section className="settings-section"><div className="settings-section-title"><Palette /><div><h3>Appearance</h3><p>Set a custom color or background image.</p></div></div><label>Background color<input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} /></label><label className="file-button"><Upload /> Add background image<input type="file" accept="image/*" onChange={handleBackgroundImage} /></label></section>
               <section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Tab Cloak</h3><p>Change the browser title and favicon.</p></div></div><label>Website name<input value={cloakName} onChange={(e) => setCloakName(e.target.value)} /></label><label className="file-button"><Upload /> Add logo<input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = () => setCloakLogo(String(reader.result)); reader.readAsDataURL(file) } }} /></label><div className="cloak-presets">{['Google','Google Docs','Google Drive','Google Classroom','Google Slides','Google Sheets','IXL','Canvas','Gmail','Khan Academy','Clever','Schoology','Quizlet','Edpuzzle','Desmos','PowerSchool'].map((name) => <button type="button" key={name} onClick={() => setCloakName(name)}>{name}</button>)}</div></section>
