@@ -473,10 +473,6 @@ export default function Page() {
           ))}
           <button className="new-tab" type="button" aria-label="Open new tab" onClick={addNewTab}><Plus aria-hidden="true" /></button>
         </div>
-        <nav className="bookmark-strip" aria-label="Bookmarks">
-          {bookmarks.map((bookmark) => <button className="bookmark-item" type="button" key={bookmark.id} onClick={() => openBookmark(bookmark)} title={bookmark.url}><img src={bookmark.icon} alt="" /><span>{bookmark.name}</span></button>)}
-          {bookmarks.length === 0 && <span className="bookmark-empty">Bookmarks will appear here</span>}
-        </nav>
         <div className="toolbar">
           <div className="nav-actions" aria-label="Browser navigation">
             <button type="button" aria-label="Back" onClick={goBack} disabled={!activeTab?.historyIndex || activeTab.historyIndex < 1}><ArrowLeft aria-hidden="true" /></button>
@@ -494,6 +490,10 @@ export default function Page() {
             <button type="button" aria-label="Open settings" onClick={() => setSettingsOpen(true)}><Menu aria-hidden="true" /></button>{isOwner && <button type="button" aria-label="Open owner panel" onClick={openOwnerPanel}><ShieldAlert aria-hidden="true" /></button>}
           </div>
         </div>
+        <nav className="bookmark-strip" aria-label="Bookmarks">
+          {bookmarks.map((bookmark) => <button className="bookmark-item" type="button" key={bookmark.id} onClick={() => openBookmark(bookmark)} title={bookmark.url}><img src={bookmark.icon} alt="" /><span>{bookmark.name}</span></button>)}
+          {bookmarks.length === 0 && <span className="bookmark-empty">Bookmarks will appear here</span>}
+        </nav>
       </header>
 
       {profileOpen && <section className="profile-modal" aria-label="Edit profile"><div className="profile-card"><button className="profile-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close profile editor"><X /></button><div className="profile-preview">{profileImage ? <img src={profileImage} alt="Profile preview" /> : profileName.slice(0, 1).toUpperCase()}</div><h2>Edit your profile</h2><label>Display name<input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={24} /></label><label className="profile-upload">Upload profile picture<input ref={profileInput} type="file" accept="image/*" onChange={updateProfileImage} /></label><button className="profile-save" type="button" onClick={() => setProfileOpen(false)}>Save profile</button></div></section>}
