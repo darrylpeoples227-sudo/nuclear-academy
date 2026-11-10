@@ -52,6 +52,12 @@ html, body { width: 100%; min-height: 100%; height: 100%; }
 .new-tab, .nav-actions button, .toolbar-actions button, .address-bar button { display: grid; place-items: center; border: 0; background: transparent; color: inherit; }
 .new-tab { width: 28px; height: 33px; color: #eadbc7; }
 .new-tab svg { width: 16px; height: 16px; }
+.bookmark-strip { min-height: 32px; display: flex; align-items: center; gap: 6px; padding: 3px 12px; overflow-x: auto; background: #0c3216; border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(0,0,0,.2); }
+.bookmark-item { display: inline-flex; align-items: center; gap: 6px; max-width: 170px; height: 25px; padding: 0 9px; border: 1px solid rgba(177,255,177,.2); border-radius: 5px; background: #164b20; color: #e6ffe6; font-size: 11px; white-space: nowrap; cursor: pointer; }
+.bookmark-item:hover, .bookmark-item:focus-visible { background: #236c2e; outline: 2px solid #7eff84; outline-offset: 1px; }
+.bookmark-item img { width: 14px; height: 14px; object-fit: contain; }
+.bookmark-item span { overflow: hidden; text-overflow: ellipsis; }
+.bookmark-empty { color: #8eb492; font-size: 11px; }
 .toolbar { min-height: 53px; display: flex; align-items: center; gap: 14px; padding: 0 15px 0 17px; color: #00d8e8; background: #197320; }
 .nav-actions, .toolbar-actions { display: flex; align-items: center; gap: 12px; }
 .nav-actions button, .toolbar-actions button { width: 22px; height: 32px; padding: 0; }

@@ -130,6 +130,7 @@ export default function Page() {
     if (id === activeTabId) setActiveTabId(remainingTabs[remainingTabs.length - 1].id)
   }
   const [isBookmarked, setIsBookmarked] = useState(false)
+  const [bookmarks, setBookmarks] = useState<Array<{ id: string; name: string; url: string; icon: string }>>([])
   const [isExiting, setIsExiting] = useState(false)
   const [selectedBrowser, setSelectedBrowser] = useState('google')
   const [proxyEngine, setProxyEngine] = useState('scramjet')
@@ -212,6 +213,29 @@ export default function Page() {
     window.setTimeout(() => {
       window.location.replace('about:blank')
     }, 100)
+  }
+
+  function toggleBookmark() {
+    if (!address.trim()) return
+    const url = normalizeAddress(address, selectedBrowser)
+    if (!url) return
+    const existing = bookmarks.find((bookmark) => bookmark.url === url)
+    if (existing) {
+      setBookmarks((current) => current.filter((bookmark) => bookmark.id !== existing.id))
+      setIsBookmarked(false)
+      return
+    }
+    if (bookmarks.length >= 10) return
+    const parsed = new URL(url)
+    const name = activeTab.title !== 'New tab' ? activeTab.title : parsed.hostname.replace(/^www\\./, '')
+    setBookmarks((current) => [...current, { id: `${Date.now()}-${url}`, name, url, icon: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(parsed.hostname)}&sz=32` }])
+    setIsBookmarked(true)
+  }
+
+  function openBookmark(bookmark: { name: string; url: string; icon: string }) {
+    const nextHistory = [...activeTab.history.slice(0, activeTab.historyIndex + 1), bookmark.url]
+    updateActiveTab({ activeUrl: `/api/proxy?engine=${proxyEngine}&url=${encodeURIComponent(bookmark.url)}`, address: bookmark.url, title: bookmark.name, history: nextHistory, historyIndex: nextHistory.length - 1 })
+    setIsBookmarked(true)
   }
 
   function navigate(event: FormEvent<HTMLFormElement>) {
@@ -424,6 +448,10 @@ export default function Page() {
           ))}
           <button className="new-tab" type="button" aria-label="Open new tab" onClick={addNewTab}><Plus aria-hidden="true" /></button>
         </div>
+        <nav className="bookmark-strip" aria-label="Bookmarks">
+          {bookmarks.map((bookmark) => <button className="bookmark-item" type="button" key={bookmark.id} onClick={() => openBookmark(bookmark)} title={bookmark.url}><img src={bookmark.icon} alt="" /><span>{bookmark.name}</span></button>)}
+          {bookmarks.length === 0 && <span className="bookmark-empty">Bookmarks will appear here</span>}
+        </nav>
         <div className="toolbar">
           <div className="nav-actions" aria-label="Browser navigation">
             <button type="button" aria-label="Back" onClick={goBack} disabled={!activeTab?.historyIndex || activeTab.historyIndex < 1}><ArrowLeft aria-hidden="true" /></button>
@@ -434,7 +462,7 @@ export default function Page() {
           <form className="address-bar" onSubmit={navigate}>
             <LockKeyhole aria-hidden="true" />
             <input aria-label="Web address" value={address} onChange={(event) => updateActiveTab({ address: event.target.value })} placeholder="Search or enter a web address" />
-            <button type="button" aria-label="Bookmark" onClick={() => setIsBookmarked(!isBookmarked)}><Star aria-hidden="true" fill={isBookmarked ? "currentColor" : "none"} /></button>
+            <button type="button" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={toggleBookmark} disabled={!address.trim() || (!isBookmarked && bookmarks.length >= 10)} title={bookmarks.length >= 10 && !isBookmarked ? 'Bookmark limit reached' : undefined}><Star aria-hidden="true" fill={isBookmarked ? "currentColor" : "none"} /></button>
           </form>
           <div className="toolbar-actions">
             <button type="button" aria-label="Exit browser" onClick={closeBrowser}><X aria-hidden="true" /></button>
