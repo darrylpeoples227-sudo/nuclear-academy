@@ -138,6 +138,7 @@ export default function Page() {
   const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | null>(null)
   const [catalogSearch, setCatalogSearch] = useState('')
   const [customLinks, setCustomLinks] = useState<Array<[string, string, 'Apps' | 'Games']>>([])
+  const [removedCatalogItems, setRemovedCatalogItems] = useState<string[]>([])
   const [customName, setCustomName] = useState('')
   const [customUrl, setCustomUrl] = useState('')
   const [customCategory, setCustomCategory] = useState<'Apps' | 'Games'>('Apps')
@@ -301,6 +302,12 @@ export default function Page() {
       return
     }
     updateActiveTab({ address: category })
+  }
+
+  function removeCatalogItem(name: string, url: string) {
+    if (!isOwner || !window.confirm(`Remove ${name} from ${catalogCategory}?`)) return
+    setRemovedCatalogItems((items) => [...items, `${name}::${url}`])
+    setCustomLinks((items) => items.filter(([itemName, itemUrl]) => itemName !== name || itemUrl !== url))
   }
 
   function openCatalogLink(url: string) {
@@ -607,7 +614,7 @@ export default function Page() {
           <div className="catalog-card">
             <div className="catalog-topbar"><button type="button" className="catalog-close" onClick={() => setCatalogCategory(null)} aria-label="Close directory"><X aria-hidden="true" /></button><label className="catalog-search"><Search aria-hidden="true" /><input aria-label={`Search ${catalogCategory}`} placeholder="Search by name" value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} /><kbd>/</kbd></label><span className="catalog-spacer" /></div>
             <div className="catalog-title"><span className="catalog-kicker">NUCLEAR ACADEMY</span><h2>{catalogCategory}</h2><p>{catalogCategory === 'Games' ? 'Pick a game and start playing.' : 'Open a favorite app in your browser.'}</p></div>
-            <div className="catalog-grid">{[...(catalogCategory === 'Apps' ? appLinks : gameLinks), ...customLinks.filter(([,, category]) => category === catalogCategory).map(([name, url]) => [name, url] as [string, string])].filter(([name, url]) => `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <button className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`} type="button" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>)}</div>
+            <div className="catalog-grid">{[...(catalogCategory === 'Apps' ? appLinks : gameLinks), ...customLinks.filter(([,, category]) => category === catalogCategory).map(([name, url]) => [name, url] as [string, string])].filter(([name, url]) => !removedCatalogItems.includes(`${name}::${url}`) && `${name} ${url}`.toLowerCase().includes(catalogSearch.trim().toLowerCase())).map(([name, url], index) => <div className={`catalog-item tile-${(index % 7) + 1}`} key={`${name}-${url}`}><button type="button" className="catalog-open" onClick={() => openCatalogLink(url)}><span className="catalog-icon"><img src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(new URL(url).hostname)}&sz=128`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; const fallback = event.currentTarget.nextElementSibling as HTMLElement | null; if (fallback) fallback.style.display = 'grid' }} /><span>{name.slice(0, 1)}</span></span><span className="catalog-name">{name}</span><ExternalLink aria-hidden="true" /></button>{isOwner && <button type="button" className="catalog-remove" onClick={() => removeCatalogItem(name, url)} aria-label={`Remove ${name}`}>Remove</button>}</div>)}</div>
           </div>
         </section>
       )}
