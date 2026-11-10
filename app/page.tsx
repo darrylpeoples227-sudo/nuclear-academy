@@ -15,7 +15,6 @@ import {
   Hash,
   Headphones,
   HelpCircle,
-  Heart,
   Info,
   LayoutGrid,
   LockKeyhole,
@@ -31,7 +30,6 @@ import {
   Search,
   Send,
   Settings,
-  Share2,
   ShieldAlert,
   ShieldCheck,
   Smile,
@@ -564,10 +562,6 @@ export default function Page() {
               <nav className="zoom-controls" aria-label="Study Room controls">
                 <button type="button" onClick={toggleMute} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}><span>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</span><small>{voiceMuted ? 'Unmute' : 'Mute'}</small></button>
                 <button type="button" aria-label="Start or stop video"><span><Video aria-hidden="true" /></span><small>Video</small></button>
-                <button type="button" aria-label="View participants"><span><Users aria-hidden="true" /></span><small>Participants</small></button>
-                <button type="button" aria-label="Open chat"><span><MessagesSquare aria-hidden="true" /></span><small>Chat</small></button>
-                <button type="button" aria-label="React"><span><Heart aria-hidden="true" /></span><small>React</small></button>
-                <button type="button" aria-label="Share screen"><span><Share2 aria-hidden="true" /></span><small>Share</small></button>
                 <button type="button" aria-label="Host tools"><span><ShieldCheck aria-hidden="true" /></span><small>Host tools</small></button>
                 <button className="zoom-end" type="button" onClick={toggleVoice} aria-label="Leave Study Room"><span><PhoneOff aria-hidden="true" /></span><small>End</small></button>
               </nav>
