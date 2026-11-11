@@ -25,6 +25,7 @@ import {
   Palette,
   PhoneOff,
   Pin,
+  Pencil,
   Plus,
   RotateCw,
   Search,
@@ -35,6 +36,7 @@ import {
   Smile,
   Sparkles,
   Star,
+  Trash2,
   Upload,
   Users,
   Video,
@@ -75,6 +77,8 @@ function normalizeAddress(value: string, engine: string) {
   return `${searchUrls[engine] ?? searchUrls.google}${encodeURIComponent(trimmed)}`
 }
 
+type ChatMessage = { id: string; userId: string; name: string; initials: string; color: string; text: string; time: string; avatarUrl?: string | null }
+
 export default function Page() {
   const [isClient, setIsClient] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
@@ -108,7 +112,10 @@ export default function Page() {
   const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
   const [assistantCategory, setAssistantCategory] = useState('help')
   const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState<{ name: string; initials: string; color: string; text: string; time: string; avatarUrl?: string | null }[]>([])
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editingMessageText, setEditingMessageText] = useState('')
+  const [chatActionError, setChatActionError] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [communityChannels, setCommunityChannels] = useState<Array<{ id: string; name: string; type: 'text' | 'voice' }>>([])
   const [activeTextChannel, setActiveTextChannel] = useState('general')
@@ -574,6 +581,40 @@ export default function Page() {
     }
   }
 
+  async function saveEditedMessage(id: string) {
+    const text = editingMessageText.trim()
+    if (!text || !user?.id) return
+    setChatActionError('')
+    try {
+      const response = await fetch(`/api/chat/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Message could not be updated.')
+      setChatMessages((messages) => messages.map((message) => message.id === id ? { ...message, text: data.message.text, time: data.message.time } : message))
+      setEditingMessageId(null)
+      setEditingMessageText('')
+    } catch (error) {
+      setChatActionError(error instanceof Error ? error.message : 'Message could not be updated.')
+    }
+  }
+
+  async function deleteChatMessage(id: string) {
+    if (!window.confirm('Delete this message?')) return
+    setChatActionError('')
+    try {
+      const response = await fetch(`/api/chat/${encodeURIComponent(id)}`, { method: 'DELETE' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Message could not be deleted.')
+      setChatMessages((messages) => messages.filter((message) => message.id !== id))
+      if (editingMessageId === id) setEditingMessageId(null)
+    } catch (error) {
+      setChatActionError(error instanceof Error ? error.message : 'Message could not be deleted.')
+    }
+  }
+
   async function askAssistant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const content = assistantInput.trim()
@@ -711,12 +752,23 @@ export default function Page() {
             <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>{activeTextChannel}</strong><span>Welcome to the Nuclear Academy community!</span></div></header>
             <div className="discord-messages" aria-live="polite">
               <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #{activeTextChannel}!</h1><p>This is the beginning of this channel.</p></div>
-              {chatMessages.map((message, index) => (
-                <article className="chat-message" key={`${message.time}-${index}`}>
-                  <div className={`message-avatar small ${message.avatarUrl ? 'image-avatar' : ''}`} style={{ background: message.color }}>{message.avatarUrl ? <img src={message.avatarUrl} alt={`${message.name}'s avatar`} /> : message.initials}</div>
-                  <div><div className="message-meta"><strong>{message.name}</strong><time>{message.time}</time></div><p>{message.text}</p></div>
-                </article>
-              ))}
+              {chatActionError && <p className="chat-action-error" role="alert">{chatActionError}</p>}
+              {chatMessages.map((message) => {
+                const isOwnMessage = message.userId === user?.id
+                const canDeleteMessage = isOwnMessage || isOwner
+                const isEditing = editingMessageId === message.id
+                return (
+                  <article className="chat-message" key={message.id} aria-label={`Message from ${message.name}`}>
+                    <div className={`message-avatar small ${message.avatarUrl ? 'image-avatar' : ''}`} style={{ background: message.color }}>{message.avatarUrl ? <img src={message.avatarUrl} alt={`${message.name}'s avatar`} /> : message.initials}</div>
+                    <div className="message-content"><div className="message-meta"><strong>{message.name}</strong><time>{message.time}</time><div className="message-actions">
+                      {isOwnMessage && <button type="button" aria-label={`Edit message from ${message.name}`} onClick={() => { setEditingMessageId(message.id); setEditingMessageText(message.text); setChatActionError('') }}><Pencil aria-hidden="true" /></button>}
+                      {canDeleteMessage && <button type="button" aria-label={`Delete message from ${message.name}`} onClick={() => void deleteChatMessage(message.id)}><Trash2 aria-hidden="true" /></button>}
+                    </div></div>
+                      {isEditing ? <form className="message-edit-form" onSubmit={(event) => { event.preventDefault(); void saveEditedMessage(message.id) }}><input aria-label="Edit your message" value={editingMessageText} onChange={(event) => setEditingMessageText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || event.keyCode === 229)) event.preventDefault() }} maxLength={2000} autoFocus /><button type="submit" disabled={!editingMessageText.trim()}>Save</button><button type="button" onClick={() => setEditingMessageId(null)}>Cancel</button></form> : <p>{message.text}</p>}
+                    </div>
+                  </article>
+                )
+              })}
             </div>
             <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={`Message #${activeTextChannel}`} aria-label={`Message ${activeTextChannel} channel`} /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
           </section>

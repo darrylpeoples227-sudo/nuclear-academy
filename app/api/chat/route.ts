@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   if (channel.length > 32) return NextResponse.json({ error: 'Invalid channel.' }, { status: 400 })
 
   const result = await pool.query(
-    `SELECT id, display_name AS name, LEFT(display_name, 1) AS initials,
+    `SELECT id, clerk_user_id AS "userId", display_name AS name, LEFT(display_name, 1) AS initials,
       avatar_color AS color, message AS text,
       to_char(created_at, 'Mon DD, YYYY at HH12:MI AM') AS time,
       avatar_url AS "avatarUrl"
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   const result = await pool.query(
     `INSERT INTO public.chat_messages (clerk_user_id, message, display_name, avatar_url, avatar_color, channel)
      VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, display_name AS name, LEFT(display_name, 1) AS initials,
+     RETURNING id, clerk_user_id AS "userId", display_name AS name, LEFT(display_name, 1) AS initials,
        avatar_color AS color, message AS text,
        to_char(created_at, 'Mon DD, YYYY at HH12:MI AM') AS time,
        avatar_url AS "avatarUrl"`,
