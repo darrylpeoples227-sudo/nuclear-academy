@@ -165,6 +165,8 @@ h1 { margin: 0; font-size: clamp(36px, 6vw, 58px); letter-spacing: -.055em; line
 .channel-search svg { width: 14px; }
 .channel-heading { display: flex; align-items: center; justify-content: space-between; margin: 12px 6px 5px; color: #949ba4; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
 .channel-heading svg { width: 14px; }
+.channel-add { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 4px; background: transparent; color: #b5bac1; cursor: pointer; }
+.channel-add:hover, .channel-add:focus-visible { background: #3f4147; color: #fff; outline: 2px solid #9ba7ff; outline-offset: 1px; }
 .channel { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 9px; border: 0; border-radius: 4px; background: transparent; color: #949ba4; text-align: left; font-size: 14px; }
 .channel svg { width: 18px; color: #949ba4; }
 .channel:hover, .active-channel { background: #404249; color: #f2f3f5; }

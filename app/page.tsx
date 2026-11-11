@@ -107,6 +107,9 @@ export default function Page() {
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<{ name: string; initials: string; color: string; text: string; time: string; avatarUrl?: string | null }[]>([])
   const [chatLoading, setChatLoading] = useState(false)
+  const [communityChannels, setCommunityChannels] = useState<Array<{ id: string; name: string; type: 'text' | 'voice' }>>([])
+  const [activeTextChannel, setActiveTextChannel] = useState('general')
+  const [activeVoiceChannel, setActiveVoiceChannel] = useState('Study Room')
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -152,6 +155,22 @@ export default function Page() {
   const importInput = useRef<HTMLInputElement>(null)
   const startupSound = useRef<HTMLAudioElement>(null)
   const exitSound = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!user?.id) {
+      setCommunityChannels([])
+      return
+    }
+    fetch('/api/community-channels', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Unable to load channels')
+        return response.json()
+      })
+      .then((data) => { if (!cancelled) setCommunityChannels(data.channels ?? []) })
+      .catch(() => { if (!cancelled) setOwnerError('Channels could not be loaded.') })
+    return () => { cancelled = true }
+  }, [user?.id])
 
   useEffect(() => {
     let cancelled = false
@@ -308,10 +327,10 @@ export default function Page() {
     window.setTimeout(() => setIsLoading(false), 400)
   }
 
-  async function loadChatMessages() {
+  async function loadChatMessages(channel = activeTextChannel) {
     setChatLoading(true)
     try {
-      const response = await fetch('/api/chat', { cache: 'no-store' })
+      const response = await fetch(`/api/chat?channel=${encodeURIComponent(channel)}`, { cache: 'no-store' })
       if (!response.ok) throw new Error('Could not load chat')
       const data = await response.json()
       setChatMessages(data.messages ?? [])
@@ -320,6 +339,35 @@ export default function Page() {
     } finally {
       setChatLoading(false)
     }
+  }
+
+  async function addCommunityChannel(type: 'text' | 'voice') {
+    if (!isOwner) return
+    const name = window.prompt(`Name the new ${type} channel:`)?.trim()
+    if (!name) return
+    try {
+      const response = await fetch('/api/community-channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, type }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Channel could not be created.')
+      setCommunityChannels((channels) => [...channels, data.channel])
+    } catch (error) {
+      setOwnerError(error instanceof Error ? error.message : 'Channel could not be created.')
+    }
+  }
+
+  function selectTextChannel(name: string) {
+    setActiveTextChannel(name)
+    setChatMessages([])
+    void loadChatMessages(name)
+  }
+
+  function selectVoiceChannel(name: string) {
+    setActiveVoiceChannel(name)
+    if (!voiceJoined) void toggleVoice()
   }
 
   function browseCategory(category: string) {
@@ -458,7 +506,7 @@ export default function Page() {
     if (/\bmessage\b/i.test(text)) { setOwnerError('That word is blocked by message moderation.'); return }
     setChatLoading(true)
     try {
-      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, avatarUrl: profileImage }) })
+      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, avatarUrl: profileImage, channel: activeTextChannel }) })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Could not save message')
       setChatMessages((messages) => [...messages, data.message])
@@ -584,15 +632,18 @@ export default function Page() {
           <section className="discord-channels">
             <div className="discord-server-title"><strong>Global Server</strong><button type="button" aria-label="Close chat" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
             <div className="channel-search"><Search aria-hidden="true" /><span>Find a channel</span></div>
-            <p className="channel-heading">TEXT CHANNELS <Plus aria-hidden="true" /></p>
-            <button className="channel active-channel" type="button"><Hash aria-hidden="true" /><span>general</span></button>
-            <p className="channel-heading voice-heading">VOICE CHANNELS <Plus aria-hidden="true" /></p>
-            <button className={`channel ${voiceJoined ? 'active-channel' : ''}`} type="button" onClick={toggleVoice}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && <small className="voice-live">LIVE</small>}</button><button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}
-            <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? 'In Study Room' : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
+            <p className="channel-heading">TEXT CHANNELS {isOwner && <button type="button" className="channel-add" onClick={() => void addCommunityChannel('text')} aria-label="Add text channel"><Plus aria-hidden="true" /></button>}</p>
+            <button className={`channel ${activeTextChannel === 'general' ? 'active-channel' : ''}`} type="button" onClick={() => selectTextChannel('general')}><Hash aria-hidden="true" /><span>general</span></button>
+            {communityChannels.filter((channel) => channel.type === 'text').map((channel) => <button className={`channel ${activeTextChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectTextChannel(channel.name)}><Hash aria-hidden="true" /><span>{channel.name}</span></button>)}
+            <p className="channel-heading voice-heading">VOICE CHANNELS {isOwner && <button type="button" className="channel-add" onClick={() => void addCommunityChannel('voice')} aria-label="Add voice channel"><Plus aria-hidden="true" /></button>}</p>
+            <button className={`channel ${voiceJoined && activeVoiceChannel === 'Study Room' ? 'active-channel' : ''}`} type="button" onClick={() => selectVoiceChannel('Study Room')}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && activeVoiceChannel === 'Study Room' && <small className="voice-live">LIVE</small>}</button>
+            {communityChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>)}
+            <button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}
+            <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? `In ${activeVoiceChannel}` : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
           </section>
           <section className={`discord-chat ${voiceJoined ? 'voice-room-active' : ''}`}>
             {voiceJoined && <div className="zoom-room" aria-label="Study Room video call">
-              <header className="zoom-room-header"><span className="zoom-meeting-dot"><Info aria-hidden="true" /></span><strong>STU-Darryl Peoples&apos;s Study Room</strong></header>
+              <header className="zoom-room-header"><span className="zoom-meeting-dot"><Info aria-hidden="true" /></span><strong>STU-Darryl Peoples&apos;s {activeVoiceChannel}</strong></header>
               <div className="zoom-stage"><div className={`zoom-participant ${isSpeaking ? 'is-speaking' : ''}`}><div className="zoom-avatar">{profileImage ? <img src={profileImage} alt="" /> : profileName.slice(0, 1).toUpperCase()}</div><span>{profileName}</span><span className="mic-status" aria-live="polite">{voiceMuted ? 'Muted' : isSpeaking ? 'Speaking' : 'Not speaking'}</span></div><span className="zoom-name-tag">{profileName}</span></div>
               <nav className="zoom-controls" aria-label="Study Room controls">
                 <button type="button" onClick={toggleMute} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}><span>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</span><small>{voiceMuted ? 'Unmute' : 'Mute'}</small></button>
@@ -601,9 +652,9 @@ export default function Page() {
                 <button className="zoom-end" type="button" onClick={toggleVoice} aria-label="Leave Study Room"><span><PhoneOff aria-hidden="true" /></span><small>End</small></button>
               </nav>
             </div>}
-            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>general</strong><span>Welcome to the Nuclear Academy community!</span></div></header>
+            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>{activeTextChannel}</strong><span>Welcome to the Nuclear Academy community!</span></div></header>
             <div className="discord-messages" aria-live="polite">
-              <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #general!</h1><p>This is the beginning of this channel.</p></div>
+              <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #{activeTextChannel}!</h1><p>This is the beginning of this channel.</p></div>
               {chatMessages.map((message, index) => (
                 <article className="chat-message" key={`${message.time}-${index}`}>
                   <div className={`message-avatar small ${message.avatarUrl ? 'image-avatar' : ''}`} style={{ background: message.color }}>{message.avatarUrl ? <img src={message.avatarUrl} alt={`${message.name}'s avatar`} /> : message.initials}</div>
@@ -611,7 +662,7 @@ export default function Page() {
                 </article>
               ))}
             </div>
-            <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Message #general" aria-label="Message general channel" /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
+            <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={`Message #${activeTextChannel}`} aria-label={`Message ${activeTextChannel} channel`} /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
           </section>
           <aside className="discord-members"><div className="members-heading">ONLINE — 0</div><div className="members-heading">OFFLINE — 0</div></aside>
         </aside>
