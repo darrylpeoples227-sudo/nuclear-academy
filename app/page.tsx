@@ -57,6 +57,19 @@ const appLinks = [
   ['Crunchyroll', 'https://crunchyroll.com'], ['X/Twitter', 'https://x.com/'], ['Twitch', 'https://www.twitch.tv/'], ['Truth Social', 'https://truthsocial.com/'], ['Reddit', 'https://reddit.com'], ['Soundboard', 'https://soundbuttonsworld.com/'], ['FMHY', 'https://fmhy.net'], ['Spotify', 'https://open.spotify.com/'], ['Amazon', 'https://www.amazon.com/'], ['Apple Music', 'https://music.apple.com/us/new'], ['Disney +', 'https://www.disneyplus.com/'], ['GeforceNOW', 'https://play.geforcenow.com/mall/#/loginwall'], ['eBay', 'https://www.ebay.com/'], ['Hacker Typer', 'https://hackertyper.net/'], ['Monochrome Music', 'https://monochrome.tf/'], ['NBA', 'https://www.nba.com/'], ['Gauth', 'https://www.gauthmath.com/'], ['CapCut', 'https://www.capcut.com/'], ['Discord', 'https://discord.com/'], ['TikTok', 'https://www.tiktok.com/'], ['Instagram', 'https://www.instagram.com/'], ['YouTube Music', 'https://music.youtube.com/'], ['Fandom', 'https://www.fandom.com/'], ['W3Schools', 'https://www.w3schools.com/'], ['Code Visual Studio', 'https://code.visualstudio.com/'], ['Scratch', 'https://scratch.mit.edu/'], ['Sh1mmer', 'https://sh1mmer.me/'], ['Thirty Dollar Website', 'https://thirtydollar.website'], ['V86', 'https://copy.sh/v86/'], ['Tiermaker', 'https://tiermaker.com/'], ['Chrome Music Lab', 'https://musiclab.chromeexperiments.com/'], ['ExtPrint3r', 'https://extprint3r.github.io/'], ['Base44', 'https://base44.app/'], ['About:blank Launcher', 'https://straight-blank-launch-pad.base44.app/'], ['Browser.lol', 'https://browser.lol/'],
 ]
 
+const aiLinks = [
+  { name: 'Chatgpt', url: 'https://chatgpt.com', mark: 'GPT' },
+  { name: 'Duck ai', url: 'https://duck.ai', mark: 'DUCK' },
+  { name: 'V0', url: 'https://v0.app/', mark: 'V0' },
+  { name: 'Replit', url: 'https://replit.com', mark: 'R' },
+  { name: 'Gemini', url: 'https://gemini.google.com/app', mark: 'G' },
+  { name: 'Base44', url: 'https://base44.com', mark: '44' },
+  { name: 'Manus', url: 'https://manus.im', mark: 'M' },
+  { name: 'Lovable', url: 'https://lovable.dev', mark: 'L' },
+  { name: 'Claude ai', url: 'https://claude.ai/login', mark: 'C' },
+  { name: 'Grok ai', url: 'https://grok.com', mark: 'X' },
+]
+
 const gameLinks = [
   ['Eaglercraft', 'https://blobs.vusercontent.net/blob/EaglercraftX_1.8_u50_Offline_Signed%20%283%29%20%281%29-7dA24t83cniGjn5CHJQwVRMeCPQTNx.html'],
   ['Yohoho io', 'https://yohoho.io/'], ['Slither io', 'http://slither.com/io'], ['Agar io', 'https://agar.io/'], ['Paper io', 'https://paperio.site/'], ['OVO', 'https://www.dedragames.com/games/ovo/1.1/'], ['OVO 2', 'https://dedragames.com/games/ovo2/0.2alpha/'], ['OVO 3', 'https://dedragames.com/games/ovo3/'], ['DOOM', 'https://swordslasher.com/games/doom/'], ['DOOM 2', 'https://swordslasher.com/games/doom2/'], ['Run', 'https://swordslasher.com/games/run1/'], ['Run 2', 'https://swordslasher.com/games/run2/'], ['Run 3', 'https://swordslasher.com/games/run3/'], ['Cookie Clicker', 'https://swordslasher.com/games/cookieclicker/'], ['Angry Birds', 'https://swordslasher.com/games/angrybirds/index.html'],
@@ -107,10 +120,6 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [assistantMode, setAssistantMode] = useState<'chat' | 'ai'>('chat')
-  const [assistantInput, setAssistantInput] = useState('')
-  const [assistantLoading, setAssistantLoading] = useState(false)
-  const [assistantMessages, setAssistantMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
-  const [assistantCategory, setAssistantCategory] = useState('help')
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
@@ -615,26 +624,6 @@ export default function Page() {
     }
   }
 
-  async function askAssistant(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const content = assistantInput.trim()
-    if (!content || assistantLoading) return
-    const nextMessages = [...assistantMessages, { role: 'user' as const, content }]
-    setAssistantMessages(nextMessages)
-    setAssistantInput('')
-    setAssistantLoading(true)
-    try {
-      const response = await fetch('/api/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: nextMessages, category: assistantCategory }) })
-  const data = await response.json()
-  if (!response.ok) throw new Error(data.error || 'Assistant request failed')
-  setAssistantMessages([...nextMessages, { role: 'assistant', content: data.text ?? 'I did not receive a response. Please try again.' }])
-    } catch {
-      setAssistantMessages([...nextMessages, { role: 'assistant', content: 'I could not connect right now. Please try again.' }])
-    } finally {
-      setAssistantLoading(false)
-    }
-  }
-
   if (!isClient || loadingProgress < 100) {
     return <main className="browser-app hydration-shell" aria-busy="true"><div className="loading-card"><img className="startup-logo" src={loadingImage} alt="Nuclear Academy loading artwork" /><div className="loading-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={loadingProgress}><span style={{ width: `${loadingProgress}%` }} /></div><strong>{loadingProgress}%</strong></div></main>
   }
@@ -777,23 +766,24 @@ export default function Page() {
           </Show>
         </>
       ) : (
-        <aside className="ai-fullscreen" aria-label="Nuclear Academy AI Assistant">
+        <aside className="ai-fullscreen ai-launcher" aria-label="AI launcher">
           <header className="ai-fullscreen-header">
-            <div><span className="ai-orb">AI</span><div><h2>Nuclear Academy AI</h2><p>Your study partner for math, science, reading, and more</p></div></div>
-            <button type="button" aria-label="Return to online chat" onClick={() => setAssistantMode('chat')}><Users aria-hidden="true" /> Chat</button>
-            <button type="button" aria-label="Close AI assistant" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button>
+            <div><span className="ai-orb"><Sparkles aria-hidden="true" /></span><div><h2>AI Launcher</h2><p>Choose an AI workspace to open</p></div></div>
+            <button type="button" aria-label="Open community chat" onClick={() => { setAssistantMode('chat'); if (user) void loadChatMessages() }}><Users aria-hidden="true" /> Chat</button>
+            <button type="button" aria-label="Close AI launcher" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button>
           </header>
-          <div className="assistant-categories" aria-label="Subject categories">
-            {['Help', 'Math', 'Science', 'Social Studies', 'Reading', 'Suggestions'].map((category) => (
-              <button key={category} type="button" className={`category-btn ${assistantCategory === category.toLowerCase() ? 'active' : ''}`} onClick={() => setAssistantCategory(category.toLowerCase())}>{category}</button>
-            ))}
+          <div className="ai-launcher-content">
+            <p className="ai-launcher-intro">Your favorite AI tools, all in one place.</p>
+            <div className="ai-launcher-grid">
+              {aiLinks.map((tool, index) => (
+                <button className={`ai-launcher-card ai-tool-${index + 1}`} key={tool.name} type="button" onClick={() => { openCatalogLink(tool.url); setAssistantOpen(false) }}>
+                  <span className="ai-launcher-mark" aria-hidden="true">{tool.mark}</span>
+                  <span className="ai-launcher-label"><strong>{tool.name}</strong><small>{new URL(tool.url).hostname}</small></span>
+                  <ExternalLink aria-hidden="true" />
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="assistant-messages" aria-live="polite">
-            {assistantMessages.length === 0 && <p className="assistant-welcome">Hi! Ask me anything about school, studying, or an idea you are exploring.</p>}
-            {assistantMessages.map((message, index) => <div className={`assistant-message ${message.role}`} key={`${message.role}-${index}`}>{message.content}</div>)}
-            {assistantLoading && <div className="assistant-message assistant">Thinking…</div>}
-          </div>
-          <form className="assistant-form" onSubmit={askAssistant}><input value={assistantInput} onChange={(event) => setAssistantInput(event.target.value)} placeholder={`Ask a ${assistantCategory} question…`} aria-label="Ask the AI assistant" /><button type="submit" disabled={assistantLoading || !assistantInput.trim()}>Ask</button></form>
         </aside>
       ))}
 
