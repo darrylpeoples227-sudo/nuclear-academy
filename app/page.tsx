@@ -798,17 +798,18 @@ export default function Page() {
       )}
 
       <section className="browser-page" aria-label="New tab page" style={{ backgroundColor, backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        {activeUrl ? (
-          <div className="browser-view" aria-label="Browsing content">
+        {tabs.map((tab) => tab.activeUrl ? (
+          <div className="browser-view" key={tab.id} aria-label={`Browsing ${tab.title}`} hidden={tab.id !== activeTabId}>
             <iframe
-              key={activeUrl}
-              title="Web page"
-              src={activeUrl}
+              key={tab.activeUrl}
+              title={`Web page: ${tab.title}`}
+              src={tab.activeUrl}
               className="web-frame"
               sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
             />
           </div>
-        ) : (
+        ) : null)}
+        {!activeUrl && (
         <div className="home-content">
           <div className="hero-mark">
             <img src="/nuclear-academy-emblem.png" alt="Nuclear Academy logo" />
