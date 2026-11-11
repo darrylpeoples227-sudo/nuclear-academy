@@ -88,6 +88,9 @@ export default function Page() {
   const [ownerLoading, setOwnerLoading] = useState(false)
   const [profileName, setProfileName] = useState('You')
   const [profileImage, setProfileImage] = useState('')
+  const [profileFile, setProfileFile] = useState<File | null>(null)
+  const [profileError, setProfileError] = useState('')
+  const [profileSaving, setProfileSaving] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [privateRoomCode, setPrivateRoomCode] = useState<string | null>(null)
   const [voiceJoined, setVoiceJoined] = useState(false)
@@ -114,6 +117,33 @@ export default function Page() {
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
   const activeUrl = activeTab?.activeUrl ?? ''
+
+  useEffect(() => {
+    let cancelled = false
+    if (!user?.id) {
+      setProfileName('You')
+      setProfileImage('')
+      setProfileFile(null)
+      return
+    }
+    fetch('/api/profile', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Unable to load profile')
+        return response.json()
+      })
+      .then((profile) => {
+        if (cancelled) return
+        setProfileName(profile.name || 'You')
+        setProfileImage(profile.image || '')
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProfileName(user.fullName || user.username || user.firstName || 'You')
+          setProfileImage(user.imageUrl || '')
+        }
+      })
+    return () => { cancelled = true }
+  }, [user?.id])
 
   function updateActiveTab(updates: Partial<typeof tabs[number]>) {
     setTabs((currentTabs) => currentTabs.map((tab) => tab.id === activeTabId ? { ...tab, ...updates } : tab))
@@ -403,7 +433,33 @@ export default function Page() {
   function updateProfileImage(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
-    const reader = new FileReader(); reader.onload = () => setProfileImage(String(reader.result)); reader.readAsDataURL(file)
+    setProfileError('')
+    setProfileFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setProfileImage(String(reader.result))
+    reader.readAsDataURL(file)
+  }
+
+  async function saveProfile() {
+    if (!user?.id) return
+    setProfileSaving(true)
+    setProfileError('')
+    try {
+      const formData = new FormData()
+      formData.set('name', profileName)
+      if (profileFile) formData.set('avatar', profileFile)
+      const response = await fetch('/api/profile', { method: 'POST', body: formData })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Profile could not be saved.')
+      setProfileName(data.name)
+      setProfileImage(data.image || '')
+      setProfileFile(null)
+      setProfileOpen(false)
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : 'Profile could not be saved.')
+    } finally {
+      setProfileSaving(false)
+    }
   }
 
   function createPrivateRoom() {
@@ -584,7 +640,7 @@ export default function Page() {
         </nav>
       </header>
 
-      {profileOpen && <section className="profile-modal" aria-label="Edit profile"><div className="profile-card"><button className="profile-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close profile editor"><X /></button><div className="profile-preview">{profileImage ? <img src={profileImage} alt="Profile preview" /> : profileName.slice(0, 1).toUpperCase()}</div><h2>Edit your profile</h2><label>Display name<input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={24} /></label><label className="profile-upload">Upload profile picture<input ref={profileInput} type="file" accept="image/*" onChange={updateProfileImage} /></label><button className="profile-save" type="button" onClick={() => setProfileOpen(false)}>Save profile</button></div></section>}
+      {profileOpen && <section className="profile-modal" aria-label="Edit profile"><div className="profile-card"><button className="profile-close" type="button" onClick={() => setProfileOpen(false)} aria-label="Close profile editor"><X /></button><div className="profile-preview">{profileImage ? <img src={profileImage} alt="Profile preview" /> : profileName.slice(0, 1).toUpperCase()}</div><h2>Edit your profile</h2><label>Display name<input value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={24} /></label><label className="profile-upload">Upload profile picture<input ref={profileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={updateProfileImage} /></label>{profileError && <p className="profile-error" role="alert">{profileError}</p>}<button className="profile-save" type="button" onClick={saveProfile} disabled={!user || profileSaving}>{profileSaving ? 'Saving…' : 'Save profile'}</button></div></section>}
 
       {ownerOpen && isOwner && (
         <section className="settings-overlay owner-overlay" aria-label="Owner panel"><div className="settings-panel owner-panel"><header className="settings-header"><div><span className="settings-kicker">OWNER CONTROL</span><h2>Community moderation</h2><p>Signed in as {user?.primaryEmailAddress?.emailAddress}</p></div><button type="button" className="settings-close" onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"><X /></button></header><div className="owner-tools"><div><strong>Message moderation</strong><p>Messages containing <code>message</code> are blocked by default.</p></div><span className="owner-status">Active</span></div>{ownerError && <p className="owner-error">{ownerError}</p>}{ownerLoading && <p className="owner-loading" role="status">Loading community members...</p>}{!ownerLoading && !ownerError && ownerUsers.length === 0 && <p className="owner-loading">No community members found.</p>}<div className="owner-user-list">{ownerUsers.map((member) => <article className="owner-user" key={member.id}><div><strong>{member.name}</strong><small>{member.email}</small></div><span className={`owner-badge ${member.status}`}>{member.role} · {member.status}{member.voiceMuted ? ' · voice muted' : ''}</span><div className="owner-actions">{['admin', 'developer'].includes(member.role) && <button type="button" onClick={() => moderateUser(member.id, member.status === 'banned' ? 'unban' : 'ban', { banDays: member.role === 'developer' ? 28 : 10 })}>{member.status === 'banned' ? 'Unban' : member.role === 'developer' ? 'Ban 4 weeks' : 'Ban 10 days'}</button>}{['mod', 'admin', 'developer'].includes(member.role) && <button type="button" onClick={() => moderateUser(member.id, member.timeoutUntil ? 'untimeout' : 'timeout', { timeoutMinutes: member.role === 'developer' ? 1440 : 60 })}>{member.timeoutUntil ? 'Remove timeout' : member.role === 'developer' ? 'Timeout 24h' : 'Timeout 1h'}</button>}<select className="owner-rank-select" value={member.role} onChange={(event) => moderateUser(member.id, event.target.value === 'member' ? 'unrank' : 'rank', { role: event.target.value })} aria-label={`Rank ${member.name}`}><option value="member">Member</option><option value="mod">Mod</option><option value="admin">Admin</option><option value="developer">Developer</option></select>{member.role !== 'member' && <button type="button" onClick={() => moderateUser(member.id, member.voiceMuted ? 'unmute' : 'mute')}>{member.voiceMuted ? 'Unmute voice' : 'Mute voice'}</button>}{['admin', 'developer'].includes(member.role) && <button type="button" onClick={() => moderateUser(member.id, 'delete-messages')}>Delete chats</button>}{member.role === 'developer' && <button type="button" className="danger-action" onClick={() => { if (window.confirm(`Delete ${member.name}'s account?`)) moderateUser(member.id, 'delete-account') }}>Delete account</button>}</div></article>)}</div></div></section>

@@ -33,8 +33,15 @@ export async function POST(request: Request) {
   if (!message || message.length > 2000) return NextResponse.json({ error: 'Message must be between 1 and 2000 characters.' }, { status: 400 })
 
   const user = await currentUser()
-  const displayName = user?.fullName || user?.username || user?.firstName || 'You'
-  const avatarUrl = user?.imageUrl || (typeof body.avatarUrl === 'string' && body.avatarUrl.startsWith('data:image/') ? body.avatarUrl : null)
+  const savedProfile = await pool.query(
+    'SELECT display_name, avatar_path FROM public.user_profiles WHERE clerk_user_id = $1',
+    [userId],
+  )
+  const displayName = savedProfile.rows[0]?.display_name || user?.fullName || user?.username || user?.firstName || 'You'
+  const avatarPath = savedProfile.rows[0]?.avatar_path as string | null | undefined
+  const avatarUrl = avatarPath
+    ? `/api/profile/avatar?pathname=${encodeURIComponent(avatarPath)}`
+    : user?.imageUrl || null
   const avatarColor = typeof body.avatarColor === 'string' && /^#[0-9a-f]{6}$/i.test(body.avatarColor) ? body.avatarColor : '#5865f2'
   const channel = typeof body.channel === 'string' ? body.channel.trim() : 'general'
   if (!channel || channel.length > 32) return NextResponse.json({ error: 'Invalid channel.' }, { status: 400 })
