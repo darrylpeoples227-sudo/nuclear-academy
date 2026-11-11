@@ -154,6 +154,28 @@ export default function Page() {
   const exitSound = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
+    let cancelled = false
+    if (!user?.id) {
+      setBookmarks([])
+      setIsBookmarked(false)
+      return
+    }
+    fetch('/api/bookmarks', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Unable to load bookmarks')
+        return response.json()
+      })
+      .then((data) => { if (!cancelled) setBookmarks(data.bookmarks ?? []) })
+      .catch(() => { if (!cancelled) setOwnerError('Saved bookmarks could not be loaded.') })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  useEffect(() => {
+    const currentUrl = address.trim() ? normalizeAddress(address, selectedBrowser) : ''
+    setIsBookmarked(Boolean(currentUrl && bookmarks.some((bookmark) => bookmark.url === currentUrl)))
+  }, [address, bookmarks, selectedBrowser])
+
+  useEffect(() => {
     setIsClient(true)
     let progress = 0
     const timer = window.setInterval(() => {
@@ -215,21 +237,34 @@ export default function Page() {
     }, 100)
   }
 
-  function toggleBookmark() {
-    if (!address.trim()) return
+  async function toggleBookmark() {
+    if (!user?.id || !address.trim()) return
     const url = normalizeAddress(address, selectedBrowser)
     if (!url) return
     const existing = bookmarks.find((bookmark) => bookmark.url === url)
-    if (existing) {
-      setBookmarks((current) => current.filter((bookmark) => bookmark.id !== existing.id))
-      setIsBookmarked(false)
-      return
+    try {
+      if (existing) {
+        const response = await fetch(`/api/bookmarks?url=${encodeURIComponent(url)}`, { method: 'DELETE' })
+        if (!response.ok) throw new Error('Could not remove bookmark')
+        setBookmarks((current) => current.filter((bookmark) => bookmark.id !== existing.id))
+        setIsBookmarked(false)
+        return
+      }
+      if (bookmarks.length >= 10) return
+      const parsed = new URL(url)
+      const name = activeTab.title !== 'New tab' ? activeTab.title : parsed.hostname.replace(/^www\\./, '')
+      const response = await fetch('/api/bookmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, url, icon: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(parsed.hostname)}&sz=32` }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not save bookmark')
+      if (!data.existing) setBookmarks((current) => [...current, data.bookmark])
+      setIsBookmarked(true)
+    } catch (error) {
+      setOwnerError(error instanceof Error ? error.message : 'Bookmark could not be saved.')
     }
-    if (bookmarks.length >= 10) return
-    const parsed = new URL(url)
-    const name = activeTab.title !== 'New tab' ? activeTab.title : parsed.hostname.replace(/^www\\./, '')
-    setBookmarks((current) => [...current, { id: `${Date.now()}-${url}`, name, url, icon: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(parsed.hostname)}&sz=32` }])
-    setIsBookmarked(true)
   }
 
   function openBookmark(bookmark: { name: string; url: string; icon: string }) {
@@ -488,7 +523,7 @@ export default function Page() {
           <form className="address-bar" onSubmit={navigate}>
             <LockKeyhole aria-hidden="true" />
             <input aria-label="Web address" value={address} onChange={(event) => updateActiveTab({ address: event.target.value })} placeholder="Search or enter a web address" />
-            <button type="button" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={toggleBookmark} disabled={!address.trim() || (!isBookmarked && bookmarks.length >= 10)} title={bookmarks.length >= 10 && !isBookmarked ? 'Bookmark limit reached' : undefined}><Star aria-hidden="true" fill={isBookmarked ? "currentColor" : "none"} /></button>
+            <button type="button" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={toggleBookmark} disabled={!user || !address.trim() || (!isBookmarked && bookmarks.length >= 10)} title={!user ? 'Sign in to save bookmarks' : bookmarks.length >= 10 && !isBookmarked ? 'Bookmark limit reached' : undefined}><Star aria-hidden="true" fill={isBookmarked ? "currentColor" : "none"} /></button>
           </form>
           <div className="toolbar-actions">
             <button type="button" aria-label="Exit browser" onClick={closeBrowser}><X aria-hidden="true" /></button>
