@@ -2,6 +2,10 @@
 
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { SignInButton, SignUpButton, Show, UserButton, useUser } from '@clerk/nextjs'
+import { ServerChannelDialog } from '@/components/community/server-channel-dialog'
+import { ServerControlPanel } from '@/components/community/server-control-panel'
+import { ServerCreateDialog } from '@/components/community/server-create-dialog'
+import type { CommunityServer, ManagedCommunityServer, ServerChannel } from '@/lib/community/types'
 import {
   ArrowLeft,
   ArrowRight,
@@ -127,8 +131,32 @@ export default function Page() {
   const [chatActionError, setChatActionError] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [communityChannels, setCommunityChannels] = useState<Array<{ id: string; name: string; type: 'text' | 'voice' }>>([])
+  const [servers, setServers] = useState<CommunityServer[]>([])
+  const [serverChannels, setServerChannels] = useState<ServerChannel[]>([])
+  const [activeServerId, setActiveServerId] = useState<string | null>(null)
+  const [activeServerChannelId, setActiveServerChannelId] = useState<string | null>(null)
+  const [serverDialogOpen, setServerDialogOpen] = useState(false)
+  const [serverName, setServerName] = useState('')
+  const [serverImage, setServerImage] = useState<File | null>(null)
+  const [serverImagePreview, setServerImagePreview] = useState('')
+  const [serverError, setServerError] = useState('')
+  const [serverSaving, setServerSaving] = useState(false)
+  const [channelDialogType, setChannelDialogType] = useState<'text' | 'voice' | null>(null)
+  const [channelName, setChannelName] = useState('')
+  const [channelError, setChannelError] = useState('')
+  const [channelSaving, setChannelSaving] = useState(false)
+  const [serverControlOpen, setServerControlOpen] = useState(false)
+  const [managedServers, setManagedServers] = useState<ManagedCommunityServer[]>([])
+  const [serverControlLoading, setServerControlLoading] = useState(false)
+  const [serverControlError, setServerControlError] = useState('')
+  const [serverRemovalReasonById, setServerRemovalReasonById] = useState<Record<string, string>>({})
   const [activeTextChannel, setActiveTextChannel] = useState('general')
   const [activeVoiceChannel, setActiveVoiceChannel] = useState('Study Room')
+
+  const userRole = typeof user?.publicMetadata?.role === 'string' ? user.publicMetadata.role.toLowerCase() : ''
+  const isServerStaff = isOwner || userRole === 'admin' || userRole === 'developer'
+  const activeServer = servers.find((server) => server.id === activeServerId) ?? null
+  const canManageActiveServer = activeServer?.createdBy === user?.id
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -201,6 +229,29 @@ export default function Page() {
   const importInput = useRef<HTMLInputElement>(null)
   const startupSound = useRef<HTMLAudioElement>(null)
   const exitSound = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!user?.id) {
+      setServers([])
+      setActiveServerId(null)
+      setServerChannels([])
+      return
+    }
+    fetch('/api/servers', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Unable to load servers')
+        return response.json()
+      })
+      .then((data) => { if (!cancelled) setServers(data.servers ?? []) })
+      .catch(() => { if (!cancelled) setServerError('Community servers could not be loaded.') })
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!serverImagePreview) return
+    return () => URL.revokeObjectURL(serverImagePreview)
+  }, [serverImagePreview])
 
   useEffect(() => {
     let cancelled = false
@@ -373,10 +424,19 @@ export default function Page() {
     window.setTimeout(() => setIsLoading(false), 400)
   }
 
-  async function loadChatMessages(channel = activeTextChannel) {
+  async function loadChatMessages(
+    channel = activeTextChannel,
+    serverId: string | null = activeServerId,
+    serverChannelId: string | null = activeServerChannelId,
+  ) {
     setChatLoading(true)
     try {
-      const response = await fetch(`/api/chat?channel=${encodeURIComponent(channel)}`, { cache: 'no-store' })
+      const params = new URLSearchParams({ channel })
+      if (serverId && serverChannelId) {
+        params.set('serverId', serverId)
+        params.set('serverChannelId', serverChannelId)
+      }
+      const response = await fetch(`/api/chat?${params.toString()}`, { cache: 'no-store' })
       if (!response.ok) throw new Error('Could not load chat')
       const data = await response.json()
       setChatMessages(data.messages ?? [])
@@ -384,6 +444,138 @@ export default function Page() {
       setOwnerError('Chat history could not be loaded. Please try again.')
     } finally {
       setChatLoading(false)
+    }
+  }
+
+  function openGlobalServer() {
+    setActiveServerId(null)
+    setServerChannels([])
+    setActiveServerChannelId(null)
+    setActiveTextChannel('general')
+    setChatMessages([])
+    void loadChatMessages('general', null, null)
+  }
+
+  async function openCommunityServer(serverId: string) {
+    setServerError('')
+    try {
+      const server = servers.find((item) => item.id === serverId)
+      if (!server?.joined) {
+        const joinResponse = await fetch(`/api/servers/${encodeURIComponent(serverId)}/join`, { method: 'POST' })
+        const joinData = await joinResponse.json()
+        if (!joinResponse.ok) throw new Error(joinData.error || 'Could not join server.')
+        setServers((items) => items.map((item) => item.id === serverId ? { ...item, joined: true } : item))
+        setManagedServers((items) => items.map((item) => item.id === serverId ? { ...item, joined: true } : item))
+      }
+      const response = await fetch(`/api/servers/${encodeURIComponent(serverId)}`, { cache: 'no-store' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not open server.')
+      const channels: ServerChannel[] = data.channels ?? []
+      const firstTextChannel = channels.find((channel) => channel.type === 'text')
+      setServerChannels(channels)
+      setActiveServerId(serverId)
+      setActiveTextChannel(firstTextChannel?.name ?? 'general')
+      setActiveServerChannelId(firstTextChannel?.id ?? null)
+      setChatMessages([])
+      if (firstTextChannel) void loadChatMessages(firstTextChannel.name, serverId, firstTextChannel.id)
+      setAssistantMode('chat')
+      setAssistantOpen(true)
+      setServerDialogOpen(false)
+      setServerControlOpen(false)
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : 'Could not open server.')
+      setServerControlError(error instanceof Error ? error.message : 'Could not open server.')
+    }
+  }
+
+  function handleServerPictureChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null
+    setServerImage(file)
+    setServerImagePreview(file ? URL.createObjectURL(file) : '')
+  }
+
+  async function createCommunityServer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (serverSaving) return
+    setServerSaving(true)
+    setServerError('')
+    try {
+      const body = new FormData()
+      body.set('name', serverName.trim())
+      if (serverImage) body.set('image', serverImage)
+      const response = await fetch('/api/servers', { method: 'POST', body })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Server could not be created.')
+      setServers((items) => [data.server, ...items.filter((item) => item.id !== data.server.id)])
+      setServerName('')
+      setServerImage(null)
+      setServerImagePreview('')
+      await openCommunityServer(data.server.id)
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : 'Server could not be created.')
+    } finally {
+      setServerSaving(false)
+    }
+  }
+
+  async function openServerControlPanel() {
+    setServerControlOpen(true)
+    setServerControlLoading(true)
+    setServerControlError('')
+    try {
+      const response = await fetch('/api/server-control', { cache: 'no-store' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not load the server control panel.')
+      setManagedServers(data.servers ?? [])
+    } catch (error) {
+      setServerControlError(error instanceof Error ? error.message : 'Could not load the server control panel.')
+    } finally {
+      setServerControlLoading(false)
+    }
+  }
+
+  async function createServerChannel(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!activeServerId || !channelDialogType || channelSaving) return
+    setChannelSaving(true)
+    setChannelError('')
+    try {
+      const response = await fetch(`/api/servers/${encodeURIComponent(activeServerId)}/channels`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: channelName.trim(), type: channelDialogType }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Channel could not be added.')
+      setServerChannels((channels) => [...channels, data.channel])
+      if (data.channel.type === 'text') selectTextChannel(data.channel.name, data.channel.id)
+      setChannelName('')
+      setChannelDialogType(null)
+    } catch (error) {
+      setChannelError(error instanceof Error ? error.message : 'Channel could not be added.')
+    } finally {
+      setChannelSaving(false)
+    }
+  }
+
+  async function deleteServerFromControlPanel(serverId: string) {
+    const reason = serverRemovalReasonById[serverId]
+    if (!reason || !window.confirm(`Delete this server for the reason “${reason}”?`)) return
+    setServerControlError('')
+    try {
+      const response = await fetch(`/api/servers/${encodeURIComponent(serverId)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Server could not be deleted.')
+      setServers((items) => items.filter((item) => item.id !== serverId))
+      setManagedServers((items) => items.filter((item) => item.id !== serverId))
+      setServerRemovalReasonById((items) => { const next = { ...items }; delete next[serverId]; return next })
+      if (activeServerId === serverId) openGlobalServer()
+    } catch (error) {
+      setServerControlError(error instanceof Error ? error.message : 'Server could not be deleted.')
     }
   }
 
@@ -405,10 +597,11 @@ export default function Page() {
     }
   }
 
-  function selectTextChannel(name: string) {
+  function selectTextChannel(name: string, serverChannelId: string | null = null) {
     setActiveTextChannel(name)
+    setActiveServerChannelId(serverChannelId)
     setChatMessages([])
-    void loadChatMessages(name)
+    void loadChatMessages(name, activeServerId, serverChannelId)
   }
 
   function selectVoiceChannel(name: string) {
@@ -578,7 +771,7 @@ export default function Page() {
     if (/\bmessage\b/i.test(text)) { setOwnerError('That word is blocked by message moderation.'); return }
     setChatLoading(true)
     try {
-      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, avatarUrl: profileImage, channel: activeTextChannel }) })
+      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, avatarUrl: profileImage, channel: activeTextChannel, serverId: activeServerId, serverChannelId: activeServerChannelId }) })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Could not save message')
       setChatMessages((messages) => [...messages, data.message])
@@ -661,7 +854,9 @@ export default function Page() {
           </form>
           <div className="toolbar-actions">
             <button type="button" aria-label="Exit browser" onClick={closeBrowser}><X aria-hidden="true" /></button>
-            <button type="button" aria-label="Open settings" onClick={() => setSettingsOpen(true)}><Menu aria-hidden="true" /></button>{isOwner && <button type="button" aria-label="Open owner panel" onClick={openOwnerPanel}><ShieldAlert aria-hidden="true" /></button>}
+            <button type="button" aria-label="Open settings" onClick={() => setSettingsOpen(true)}><Menu aria-hidden="true" /></button>
+            {isServerStaff && <button type="button" aria-label="Open server control panel" title="Server Control Panel" onClick={() => void openServerControlPanel()}><ShieldCheck aria-hidden="true" /></button>}
+            {isOwner && <button type="button" aria-label="Open owner panel" onClick={openOwnerPanel}><ShieldAlert aria-hidden="true" /></button>}
           </div>
         </div>
         <nav className="bookmark-strip" aria-label="Bookmarks">
@@ -694,6 +889,39 @@ export default function Page() {
         </section>
       )}
 
+      <ServerCreateDialog
+        open={serverDialogOpen}
+        name={serverName}
+        picturePreview={serverImagePreview}
+        error={serverError}
+        saving={serverSaving}
+        servers={servers}
+        onNameChange={setServerName}
+        onPictureChange={handleServerPictureChange}
+        onSubmit={createCommunityServer}
+        onJoin={(serverId) => void openCommunityServer(serverId)}
+        onClose={() => { setServerDialogOpen(false); setServerError('') }}
+      />
+      {channelDialogType && <ServerChannelDialog
+        type={channelDialogType}
+        name={channelName}
+        error={channelError}
+        saving={channelSaving}
+        onNameChange={setChannelName}
+        onSubmit={createServerChannel}
+        onClose={() => { setChannelDialogType(null); setChannelError('') }}
+      />}
+      {serverControlOpen && <ServerControlPanel
+        servers={managedServers}
+        reasons={serverRemovalReasonById}
+        loading={serverControlLoading}
+        error={serverControlError}
+        onReasonChange={(serverId, reason) => setServerRemovalReasonById((items) => ({ ...items, [serverId]: reason }))}
+        onOpenServer={(serverId) => void openCommunityServer(serverId)}
+        onDeleteServer={(serverId) => void deleteServerFromControlPanel(serverId)}
+        onClose={() => setServerControlOpen(false)}
+      />}
+
       {assistantOpen && (assistantMode === 'chat' ? (
         <>
           <Show when="signed-out">
@@ -708,23 +936,27 @@ export default function Page() {
             </aside>
           </Show>
           <Show when="signed-in">
-        <aside className="discord-shell" aria-label="Nuclear Academy online chat">
+        <aside className="discord-shell" aria-label={`${activeServer?.name ?? 'Global Server'} community chat`}>
           <nav className="discord-servers" aria-label="Servers">
-            <button className="server-orb server-home image-server-orb" type="button" aria-label="Global Server"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/globe-CLJOGSxPw2gyQEofBtww7S1Xq8btqG.png" alt="Global Server globe logo" /></button>
+            <button className={`server-orb server-home image-server-orb ${!activeServerId ? 'active-server' : ''}`} type="button" aria-label="Global Server" onClick={openGlobalServer}><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/globe-CLJOGSxPw2gyQEofBtww7S1Xq8btqG.png" alt="" /></button>
             <span className="server-divider" />
-            <button className="server-orb active-server" type="button" aria-label="Global Server"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/globe-CLJOGSxPw2gyQEofBtww7S1Xq8btqG.png" alt="" /></button>
-            <button className="server-orb add-server" type="button" aria-label="Add a server"><Plus aria-hidden="true" /></button>
+            {servers.filter((server) => server.joined).map((server) => <button className={`server-orb image-server-orb ${activeServerId === server.id ? 'active-server' : ''}`} type="button" key={server.id} aria-label={server.name} title={server.name} onClick={() => void openCommunityServer(server.id)}>{server.imageUrl ? <img src={server.imageUrl} alt="" loading="lazy" /> : server.name.slice(0, 1).toUpperCase()}</button>)}
+            <button className="server-orb add-server" type="button" aria-label="Add a server" title="Create or join a server" onClick={() => { setServerError(''); setServerDialogOpen(true) }}><Plus aria-hidden="true" /></button>
           </nav>
           <section className="discord-channels">
-            <div className="discord-server-title"><strong>Global Server</strong><button type="button" aria-label="Close chat" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
+            <div className="discord-server-title"><strong>{activeServer?.name ?? 'Global Server'}</strong><button type="button" aria-label="Close chat" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button></div>
             <div className="channel-search"><Search aria-hidden="true" /><span>Find a channel</span></div>
-            <p className="channel-heading">TEXT CHANNELS {isOwner && <button type="button" className="channel-add" onClick={() => void addCommunityChannel('text')} aria-label="Add text channel"><Plus aria-hidden="true" /></button>}</p>
-            <button className={`channel ${activeTextChannel === 'general' ? 'active-channel' : ''}`} type="button" onClick={() => selectTextChannel('general')}><Hash aria-hidden="true" /><span>general</span></button>
-            {communityChannels.filter((channel) => channel.type === 'text').map((channel) => <button className={`channel ${activeTextChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectTextChannel(channel.name)}><Hash aria-hidden="true" /><span>{channel.name}</span></button>)}
-            <p className="channel-heading voice-heading">VOICE CHANNELS {isOwner && <button type="button" className="channel-add" onClick={() => void addCommunityChannel('voice')} aria-label="Add voice channel"><Plus aria-hidden="true" /></button>}</p>
-            <button className={`channel ${voiceJoined && activeVoiceChannel === 'Study Room' ? 'active-channel' : ''}`} type="button" onClick={() => selectVoiceChannel('Study Room')}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && activeVoiceChannel === 'Study Room' && <small className="voice-live">LIVE</small>}</button>
-            {communityChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>)}
-            <button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}
+            <p className="channel-heading">TEXT CHANNELS {(canManageActiveServer || (!activeServerId && isOwner)) && <button type="button" className="channel-add" onClick={() => { if (activeServerId) { setChannelName(''); setChannelError(''); setChannelDialogType('text') } else void addCommunityChannel('text') }} aria-label="Add text channel"><Plus aria-hidden="true" /></button>}</p>
+            {activeServerId ? serverChannels.filter((channel) => channel.type === 'text').map((channel) => <button className={`channel ${activeTextChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectTextChannel(channel.name, channel.id)}><Hash aria-hidden="true" /><span>{channel.name}</span></button>) : <>
+              <button className={`channel ${activeTextChannel === 'general' ? 'active-channel' : ''}`} type="button" onClick={() => selectTextChannel('general', null)}><Hash aria-hidden="true" /><span>general</span></button>
+              {communityChannels.filter((channel) => channel.type === 'text').map((channel) => <button className={`channel ${activeTextChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectTextChannel(channel.name, null)}><Hash aria-hidden="true" /><span>{channel.name}</span></button>)}
+            </>}
+            <p className="channel-heading voice-heading">VOICE CHANNELS {(canManageActiveServer || (!activeServerId && isOwner)) && <button type="button" className="channel-add" onClick={() => { if (activeServerId) { setChannelName(''); setChannelError(''); setChannelDialogType('voice') } else void addCommunityChannel('voice') }} aria-label="Add voice channel"><Plus aria-hidden="true" /></button>}</p>
+            {activeServerId ? serverChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>) : <>
+              <button className={`channel ${voiceJoined && activeVoiceChannel === 'Study Room' ? 'active-channel' : ''}`} type="button" onClick={() => selectVoiceChannel('Study Room')}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && activeVoiceChannel === 'Study Room' && <small className="voice-live">LIVE</small>}</button>
+              {communityChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>)}
+            </>}
+            {!activeServerId && <><button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}</>}
             <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? `In ${activeVoiceChannel}` : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
           </section>
           <section className={`discord-chat ${voiceJoined ? 'voice-room-active' : ''}`}>
@@ -738,7 +970,7 @@ export default function Page() {
                 <button className="zoom-end" type="button" onClick={toggleVoice} aria-label="Leave Study Room"><span><PhoneOff aria-hidden="true" /></span><small>End</small></button>
               </nav>
             </div>}
-            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>{activeTextChannel}</strong><span>Welcome to the Nuclear Academy community!</span></div></header>
+            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>{activeTextChannel}</strong><span>Welcome to {activeServer?.name ?? 'the Nuclear Academy community'}!</span></div></header>
             <div className="discord-messages" aria-live="polite">
               <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #{activeTextChannel}!</h1><p>This is the beginning of this channel.</p></div>
               {chatActionError && <p className="chat-action-error" role="alert">{chatActionError}</p>}
