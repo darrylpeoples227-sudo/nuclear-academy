@@ -50,7 +50,7 @@ export function LiveChat({ channel, serverId, serverChannelId, serverName, userI
     revalidateOnFocus: true,
     dedupingInterval: 1000,
   })
-  const messages = data?.messages ?? []
+  const messages: ChatMessage[] = data?.messages ?? []
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -70,7 +70,7 @@ export function LiveChat({ channel, serverId, serverChannelId, serverName, userI
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Your message could not be saved.')
-      await mutate((current) => ({ messages: [...(current?.messages ?? []), result.message as ChatMessage] }), { revalidate: false })
+      await mutate((current: ChatResponse | undefined) => ({ messages: [...(current?.messages ?? []), result.message as ChatMessage] }), { revalidate: false })
       setInput('')
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'Your message could not be saved.')
@@ -91,8 +91,8 @@ export function LiveChat({ channel, serverId, serverChannelId, serverName, userI
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Message could not be updated.')
-      await mutate((current) => ({
-        messages: (current?.messages ?? []).map((message) => message.id === id
+      await mutate((current: ChatResponse | undefined) => ({
+        messages: (current?.messages ?? []).map((message: ChatMessage) => message.id === id
           ? { ...message, text: result.message.text, time: result.message.time }
           : message),
       }), { revalidate: false })
@@ -110,7 +110,7 @@ export function LiveChat({ channel, serverId, serverChannelId, serverName, userI
       const response = await fetch(`/api/chat/${encodeURIComponent(id)}`, { method: 'DELETE' })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Message could not be deleted.')
-      await mutate((current) => ({ messages: (current?.messages ?? []).filter((message) => message.id !== id) }), { revalidate: false })
+      await mutate((current: ChatResponse | undefined) => ({ messages: (current?.messages ?? []).filter((message: ChatMessage) => message.id !== id) }), { revalidate: false })
       if (editingMessageId === id) setEditingMessageId(null)
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'Message could not be deleted.')

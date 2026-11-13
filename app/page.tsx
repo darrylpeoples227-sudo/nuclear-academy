@@ -1,11 +1,12 @@
 'use client'
 
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { SignInButton, SignUpButton, Show, UserButton, useUser } from '@clerk/nextjs'
 import { ServerChannelDialog } from '@/components/community/server-channel-dialog'
 import { ServerControlPanel } from '@/components/community/server-control-panel'
 import { ServerCreateDialog } from '@/components/community/server-create-dialog'
 import { LiveChat } from '@/components/community/live-chat'
+import { LiveVoiceRoom } from '@/components/community/live-voice-room'
 import type { CommunityServer, ManagedCommunityServer, ServerChannel } from '@/lib/community/types'
 import {
   ArrowLeft,
@@ -141,11 +142,19 @@ export default function Page() {
   const [serverRemovalReasonById, setServerRemovalReasonById] = useState<Record<string, string>>({})
   const [activeTextChannel, setActiveTextChannel] = useState('general')
   const [activeVoiceChannel, setActiveVoiceChannel] = useState('Study Room')
+  const [activeVoiceChannelId, setActiveVoiceChannelId] = useState<string | null>(null)
+  const [activeVoiceServerId, setActiveVoiceServerId] = useState<string | null>(null)
 
   const userRole = typeof user?.publicMetadata?.role === 'string' ? user.publicMetadata.role.toLowerCase() : ''
   const isServerStaff = isOwner || userRole === 'admin' || userRole === 'developer'
   const activeServer = servers.find((server) => server.id === activeServerId) ?? null
   const canManageActiveServer = activeServer?.createdBy === user?.id
+  const voiceScope = useMemo(() => ({
+    channel: activeVoiceChannel,
+    channelId: activeVoiceServerId ? null : activeVoiceChannelId,
+    serverId: activeVoiceServerId,
+    serverChannelId: activeVoiceServerId ? activeVoiceChannelId : null,
+  }), [activeVoiceChannel, activeVoiceChannelId, activeVoiceServerId])
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]
   const address = activeTab?.address ?? ''
@@ -564,8 +573,10 @@ export default function Page() {
     setActiveServerChannelId(serverChannelId)
   }
 
-  function selectVoiceChannel(name: string) {
+  function selectVoiceChannel(name: string, channelId: string | null = null) {
     setActiveVoiceChannel(name)
+    setActiveVoiceChannelId(channelId)
+    setActiveVoiceServerId(activeServerId)
     if (!voiceJoined) void toggleVoice()
   }
 
@@ -858,22 +869,32 @@ export default function Page() {
               {communityChannels.filter((channel) => channel.type === 'text').map((channel) => <button className={`channel ${activeTextChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectTextChannel(channel.name, null)}><Hash aria-hidden="true" /><span>{channel.name}</span></button>)}
             </>}
             <p className="channel-heading voice-heading">VOICE CHANNELS {(canManageActiveServer || (!activeServerId && isOwner)) && <button type="button" className="channel-add" onClick={() => { if (activeServerId) { setChannelName(''); setChannelError(''); setChannelDialogType('voice') } else void addCommunityChannel('voice') }} aria-label="Add voice channel"><Plus aria-hidden="true" /></button>}</p>
-            {activeServerId ? serverChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>) : <>
+            {activeServerId ? serverChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name, channel.id)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>) : <>
               <button className={`channel ${voiceJoined && activeVoiceChannel === 'Study Room' ? 'active-channel' : ''}`} type="button" onClick={() => selectVoiceChannel('Study Room')}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && activeVoiceChannel === 'Study Room' && <small className="voice-live">LIVE</small>}</button>
-              {communityChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>)}
+              {communityChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name, channel.id)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>)}
             </>}
             {!activeServerId && <><button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}</>}
             <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? `In ${activeVoiceChannel}` : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
           </section>
           <section className={`discord-chat ${voiceJoined ? 'voice-room-active' : ''}`}>
-            {voiceJoined && <div className="zoom-room" aria-label="Study Room video call">
-              <header className="zoom-room-header"><span className="zoom-meeting-dot"><Info aria-hidden="true" /></span><strong>STU-Darryl Peoples&apos;s {activeVoiceChannel}</strong></header>
-              <div className="zoom-stage"><div className={`zoom-participant ${isSpeaking ? 'is-speaking' : ''}`}><div className="zoom-avatar">{profileImage ? <img src={profileImage} alt="" /> : profileName.slice(0, 1).toUpperCase()}</div><span>{profileName}</span><span className="mic-status" aria-live="polite">{voiceMuted ? 'Muted' : isSpeaking ? 'Speaking' : 'Not speaking'}</span></div><span className="zoom-name-tag">{profileName}</span></div>
-              <nav className="zoom-controls" aria-label="Study Room controls">
+            {voiceJoined && <div className="zoom-room" aria-label={`${activeVoiceChannel} voice call`}>
+              <header className="zoom-room-header"><span className="zoom-meeting-dot"><Info aria-hidden="true" /></span><strong>{profileName}&apos;s {activeVoiceChannel}</strong></header>
+              <LiveVoiceRoom
+                key={`${voiceScope.serverId ?? 'global'}:${voiceScope.serverChannelId ?? voiceScope.channelId ?? voiceScope.channel}`}
+                active={voiceJoined}
+                userId={user?.id ?? ''}
+                profileName={profileName}
+                profileImage={profileImage}
+                muted={voiceMuted}
+                speaking={isSpeaking}
+                stream={micStream.current}
+                scope={voiceScope}
+              />
+              <nav className="zoom-controls" aria-label={`${activeVoiceChannel} controls`}>
                 <button type="button" onClick={toggleMute} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}><span>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</span><small>{voiceMuted ? 'Unmute' : 'Mute'}</small></button>
-                <button type="button" aria-label="Start or stop video"><span><Video aria-hidden="true" /></span><small>Video</small></button>
-                <button type="button" aria-label="Host tools"><span><ShieldCheck aria-hidden="true" /></span><small>Host tools</small></button>
-                <button className="zoom-end" type="button" onClick={toggleVoice} aria-label="Leave Study Room"><span><PhoneOff aria-hidden="true" /></span><small>End</small></button>
+                <button type="button" aria-label="Video is not available in audio-only rooms" disabled><span><Video aria-hidden="true" /></span><small>Audio only</small></button>
+                <button type="button" aria-label="Host tools are not available" disabled><span><ShieldCheck aria-hidden="true" /></span><small>Host tools</small></button>
+                <button className="zoom-end" type="button" onClick={toggleVoice} aria-label={`Leave ${activeVoiceChannel}`}><span><PhoneOff aria-hidden="true" /></span><small>Leave</small></button>
               </nav>
             </div>}
             <LiveChat
