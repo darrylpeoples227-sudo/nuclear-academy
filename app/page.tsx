@@ -5,6 +5,7 @@ import { SignInButton, SignUpButton, Show, UserButton, useUser } from '@clerk/ne
 import { ServerChannelDialog } from '@/components/community/server-channel-dialog'
 import { ServerControlPanel } from '@/components/community/server-control-panel'
 import { ServerCreateDialog } from '@/components/community/server-create-dialog'
+import { LiveChat } from '@/components/community/live-chat'
 import type { CommunityServer, ManagedCommunityServer, ServerChannel } from '@/lib/community/types'
 import {
   ArrowLeft,
@@ -29,18 +30,14 @@ import {
   Palette,
   PhoneOff,
   Pin,
-  Pencil,
   Plus,
   RotateCw,
   Search,
-  Send,
   Settings,
   ShieldAlert,
   ShieldCheck,
-  Smile,
   Sparkles,
   Star,
-  Trash2,
   Upload,
   Users,
   Video,
@@ -94,8 +91,6 @@ function normalizeAddress(value: string, engine: string) {
   return `${searchUrls[engine] ?? searchUrls.google}${encodeURIComponent(trimmed)}`
 }
 
-type ChatMessage = { id: string; userId: string; name: string; initials: string; color: string; text: string; time: string; avatarUrl?: string | null }
-
 export default function Page() {
   const [isClient, setIsClient] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
@@ -124,12 +119,6 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [assistantMode, setAssistantMode] = useState<'chat' | 'ai'>('chat')
-  const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
-  const [editingMessageText, setEditingMessageText] = useState('')
-  const [chatActionError, setChatActionError] = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
   const [communityChannels, setCommunityChannels] = useState<Array<{ id: string; name: string; type: 'text' | 'voice' }>>([])
   const [servers, setServers] = useState<CommunityServer[]>([])
   const [serverChannels, setServerChannels] = useState<ServerChannel[]>([])
@@ -424,36 +413,11 @@ export default function Page() {
     window.setTimeout(() => setIsLoading(false), 400)
   }
 
-  async function loadChatMessages(
-    channel = activeTextChannel,
-    serverId: string | null = activeServerId,
-    serverChannelId: string | null = activeServerChannelId,
-  ) {
-    setChatLoading(true)
-    try {
-      const params = new URLSearchParams({ channel })
-      if (serverId && serverChannelId) {
-        params.set('serverId', serverId)
-        params.set('serverChannelId', serverChannelId)
-      }
-      const response = await fetch(`/api/chat?${params.toString()}`, { cache: 'no-store' })
-      if (!response.ok) throw new Error('Could not load chat')
-      const data = await response.json()
-      setChatMessages(data.messages ?? [])
-    } catch {
-      setOwnerError('Chat history could not be loaded. Please try again.')
-    } finally {
-      setChatLoading(false)
-    }
-  }
-
   function openGlobalServer() {
     setActiveServerId(null)
     setServerChannels([])
     setActiveServerChannelId(null)
     setActiveTextChannel('general')
-    setChatMessages([])
-    void loadChatMessages('general', null, null)
   }
 
   async function openCommunityServer(serverId: string) {
@@ -476,8 +440,6 @@ export default function Page() {
       setActiveServerId(serverId)
       setActiveTextChannel(firstTextChannel?.name ?? 'general')
       setActiveServerChannelId(firstTextChannel?.id ?? null)
-      setChatMessages([])
-      if (firstTextChannel) void loadChatMessages(firstTextChannel.name, serverId, firstTextChannel.id)
       setAssistantMode('chat')
       setAssistantOpen(true)
       setServerDialogOpen(false)
@@ -600,8 +562,6 @@ export default function Page() {
   function selectTextChannel(name: string, serverChannelId: string | null = null) {
     setActiveTextChannel(name)
     setActiveServerChannelId(serverChannelId)
-    setChatMessages([])
-    void loadChatMessages(name, activeServerId, serverChannelId)
   }
 
   function selectVoiceChannel(name: string) {
@@ -618,7 +578,6 @@ export default function Page() {
       const mode = category === 'AI' ? 'ai' : 'chat'
       setAssistantMode(mode)
       setAssistantOpen(true)
-      if (mode === 'chat' && user) void loadChatMessages()
       return
     }
     updateActiveTab({ address: category })
@@ -762,59 +721,6 @@ export default function Page() {
     const file = event.target.files?.[0]
     if (!file) return
     const reader = new FileReader(); reader.onload = () => setBackgroundImage(String(reader.result)); reader.readAsDataURL(file)
-  }
-
-  async function sendChatMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const text = chatInput.trim()
-    if (!text || chatLoading) return
-    if (/\bmessage\b/i.test(text)) { setOwnerError('That word is blocked by message moderation.'); return }
-    setChatLoading(true)
-    try {
-      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, avatarUrl: profileImage, channel: activeTextChannel, serverId: activeServerId, serverChannelId: activeServerChannelId }) })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Could not save message')
-      setChatMessages((messages) => [...messages, data.message])
-      setChatInput('')
-    } catch {
-      setOwnerError('Your message could not be saved. Please try again.')
-    } finally {
-      setChatLoading(false)
-    }
-  }
-
-  async function saveEditedMessage(id: string) {
-    const text = editingMessageText.trim()
-    if (!text || !user?.id) return
-    setChatActionError('')
-    try {
-      const response = await fetch(`/api/chat/${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Message could not be updated.')
-      setChatMessages((messages) => messages.map((message) => message.id === id ? { ...message, text: data.message.text, time: data.message.time } : message))
-      setEditingMessageId(null)
-      setEditingMessageText('')
-    } catch (error) {
-      setChatActionError(error instanceof Error ? error.message : 'Message could not be updated.')
-    }
-  }
-
-  async function deleteChatMessage(id: string) {
-    if (!window.confirm('Delete this message?')) return
-    setChatActionError('')
-    try {
-      const response = await fetch(`/api/chat/${encodeURIComponent(id)}`, { method: 'DELETE' })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Message could not be deleted.')
-      setChatMessages((messages) => messages.filter((message) => message.id !== id))
-      if (editingMessageId === id) setEditingMessageId(null)
-    } catch (error) {
-      setChatActionError(error instanceof Error ? error.message : 'Message could not be deleted.')
-    }
   }
 
   if (!isClient || loadingProgress < 100) {
@@ -970,28 +876,14 @@ export default function Page() {
                 <button className="zoom-end" type="button" onClick={toggleVoice} aria-label="Leave Study Room"><span><PhoneOff aria-hidden="true" /></span><small>End</small></button>
               </nav>
             </div>}
-            <header className="discord-chat-header"><div className="chat-title"><Hash aria-hidden="true" /><strong>{activeTextChannel}</strong><span>Welcome to {activeServer?.name ?? 'the Nuclear Academy community'}!</span></div></header>
-            <div className="discord-messages" aria-live="polite">
-              <div className="channel-welcome"><div className="welcome-hash"><Hash aria-hidden="true" /></div><h1>Welcome to #{activeTextChannel}!</h1><p>This is the beginning of this channel.</p></div>
-              {chatActionError && <p className="chat-action-error" role="alert">{chatActionError}</p>}
-              {chatMessages.map((message) => {
-                const isOwnMessage = message.userId === user?.id
-                const canDeleteMessage = isOwnMessage || isOwner
-                const isEditing = editingMessageId === message.id
-                return (
-                  <article className="chat-message" key={message.id} aria-label={`Message from ${message.name}`}>
-                    <div className={`message-avatar small ${message.avatarUrl ? 'image-avatar' : ''}`} style={{ background: message.color }}>{message.avatarUrl ? <img src={message.avatarUrl} alt={`${message.name}'s avatar`} /> : message.initials}</div>
-                    <div className="message-content"><div className="message-meta"><strong>{message.name}</strong><time>{message.time}</time><div className="message-actions">
-                      {isOwnMessage && <button type="button" aria-label={`Edit message from ${message.name}`} onClick={() => { setEditingMessageId(message.id); setEditingMessageText(message.text); setChatActionError('') }}><Pencil aria-hidden="true" /></button>}
-                      {canDeleteMessage && <button type="button" aria-label={`Delete message from ${message.name}`} onClick={() => void deleteChatMessage(message.id)}><Trash2 aria-hidden="true" /></button>}
-                    </div></div>
-                      {isEditing ? <form className="message-edit-form" onSubmit={(event) => { event.preventDefault(); void saveEditedMessage(message.id) }}><input aria-label="Edit your message" value={editingMessageText} onChange={(event) => setEditingMessageText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && (event.nativeEvent.isComposing || event.keyCode === 229)) event.preventDefault() }} maxLength={2000} autoFocus /><button type="submit" disabled={!editingMessageText.trim()}>Save</button><button type="button" onClick={() => setEditingMessageId(null)}>Cancel</button></form> : <p>{message.text}</p>}
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-            <form className="discord-composer" onSubmit={sendChatMessage}><button type="button" aria-label="Add attachment"><Plus aria-hidden="true" /></button><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={`Message #${activeTextChannel}`} aria-label={`Message ${activeTextChannel} channel`} /><button type="button" aria-label="Add emoji"><Smile aria-hidden="true" /></button><button className="send-chat" type="submit" aria-label="Send message" disabled={!chatInput.trim()}><Send aria-hidden="true" /></button></form>
+            <LiveChat
+              channel={activeTextChannel}
+              serverId={activeServerId}
+              serverChannelId={activeServerChannelId}
+              serverName={activeServer?.name ?? 'the Nuclear Academy community'}
+              userId={user?.id ?? ''}
+              isOwner={isOwner}
+            />
           </section>
           <aside className="discord-members"><div className="members-heading">ONLINE — 0</div><div className="members-heading">OFFLINE — 0</div></aside>
         </aside>
@@ -1001,7 +893,7 @@ export default function Page() {
         <aside className="ai-fullscreen ai-launcher" aria-label="AI launcher">
           <header className="ai-fullscreen-header">
             <div><span className="ai-orb"><Sparkles aria-hidden="true" /></span><div><h2>AI Launcher</h2><p>Choose an AI workspace to open</p></div></div>
-            <button type="button" aria-label="Open community chat" onClick={() => { setAssistantMode('chat'); if (user) void loadChatMessages() }}><Users aria-hidden="true" /> Chat</button>
+            <button type="button" aria-label="Open community chat" onClick={() => setAssistantMode('chat')}><Users aria-hidden="true" /> Chat</button>
             <button type="button" aria-label="Close AI launcher" onClick={() => setAssistantOpen(false)}><X aria-hidden="true" /></button>
           </header>
           <div className="ai-launcher-content">
