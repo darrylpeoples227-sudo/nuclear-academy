@@ -84,12 +84,11 @@ function normalizeAddress(value: string, engine: string) {
   if (/^https?:\/\//i.test(trimmed)) return trimmed
   if (/^[^\s]+\.[^\s]+$/.test(trimmed)) return `https://${trimmed}`
   const searchUrls: Record<string, string> = {
-    google: 'https://www.google.com/search?q=',
     duckduckgo: 'https://duckduckgo.com/?q=',
     brave: 'https://search.brave.com/search?q=',
     bing: 'https://www.bing.com/search?q=',
   }
-  return `${searchUrls[engine] ?? searchUrls.google}${encodeURIComponent(trimmed)}`
+  return `${searchUrls[engine] ?? searchUrls.duckduckgo}${encodeURIComponent(trimmed)}`
 }
 
 export default function Page() {
@@ -112,6 +111,7 @@ export default function Page() {
   const [privateRoomCode, setPrivateRoomCode] = useState<string | null>(null)
   const [voiceJoined, setVoiceJoined] = useState(false)
   const [voiceMuted, setVoiceMuted] = useState(false)
+  const [voiceError, setVoiceError] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const profileInput = useRef<HTMLInputElement>(null)
   const micStream = useRef<MediaStream | null>(null)
@@ -206,7 +206,7 @@ export default function Page() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [bookmarks, setBookmarks] = useState<Array<{ id: string; name: string; url: string; icon: string }>>([])
   const [isExiting, setIsExiting] = useState(false)
-  const [selectedBrowser, setSelectedBrowser] = useState('google')
+  const [selectedBrowser, setSelectedBrowser] = useState('duckduckgo')
   const [proxyEngine, setProxyEngine] = useState('scramjet')
   const [catalogCategory, setCatalogCategory] = useState<'Apps' | 'Games' | null>(null)
   const [catalogSearch, setCatalogSearch] = useState('')
@@ -219,7 +219,7 @@ export default function Page() {
   const [panicUrl, setPanicUrl] = useState('https://www.google.com')
   const [panicCombo, setPanicCombo] = useState('Control+Shift+X')
   const [antiClose, setAntiClose] = useState(false)
-  const [customCursor, setCustomCursor] = useState(false)
+  const [customCursor, setCustomCursor] = useState(true)
   const [backgroundColor, setBackgroundColor] = useState('#7eff84')
   const [backgroundImage, setBackgroundImage] = useState('')
   const [cloakName, setCloakName] = useState('Nuclear Academy')
@@ -649,12 +649,20 @@ export default function Page() {
   async function toggleVoice() {
     if (voiceJoined) {
       micStream.current?.getTracks().forEach((track) => track.stop())
-      micStream.current = null; setVoiceJoined(false); setVoiceMuted(false); return
+      micStream.current = null
+      setVoiceJoined(false)
+      setVoiceMuted(false)
+      setVoiceError('')
+      return
     }
+    setVoiceError('')
     try {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Microphone access requires a supported browser and secure connection.')
       micStream.current = await navigator.mediaDevices.getUserMedia({ audio: true })
       setVoiceJoined(true)
-    } catch { setOwnerError('Microphone access was blocked. Allow microphone permission to join voice chat.') }
+    } catch (error) {
+      setVoiceError(error instanceof Error ? error.message : 'Microphone access was denied. Allow microphone permission to join voice chat.')
+    }
   }
 
   function toggleMute() {
@@ -719,13 +727,13 @@ export default function Page() {
     const file = event.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => { try { const data = JSON.parse(String(reader.result)); setPanicUrl(data.panicUrl ?? panicUrl); setPanicCombo(data.panicCombo ?? panicCombo); setAntiClose(Boolean(data.antiClose)); setCustomCursor(Boolean(data.customCursor)); setBackgroundColor(data.backgroundColor ?? backgroundColor); setBackgroundImage(data.backgroundImage ?? ''); setCloakName(data.cloakName ?? cloakName); setCloakLogo(data.cloakLogo ?? cloakLogo); setSelectedBrowser(data.selectedBrowser ?? selectedBrowser) } catch { window.alert('That settings file is not valid JSON.') } }
+    reader.onload = () => { try { const data = JSON.parse(String(reader.result)); setPanicUrl(data.panicUrl ?? panicUrl); setPanicCombo(data.panicCombo ?? panicCombo); setAntiClose(Boolean(data.antiClose)); setCustomCursor(data.customCursor === undefined ? true : Boolean(data.customCursor)); setBackgroundColor(data.backgroundColor ?? backgroundColor); setBackgroundImage(data.backgroundImage ?? ''); setCloakName(data.cloakName ?? cloakName); setCloakLogo(data.cloakLogo ?? cloakLogo); setSelectedBrowser(data.selectedBrowser === 'brave' || data.selectedBrowser === 'bing' ? data.selectedBrowser : 'duckduckgo') } catch { window.alert('That settings file is not valid JSON.') } }
     reader.readAsText(file)
     event.target.value = ''
   }
 
   function resetSettings() {
-    setPanicUrl('https://www.google.com'); setPanicCombo('Control+Shift+X'); setAntiClose(false); setCustomCursor(false); setBackgroundColor('#7eff84'); setBackgroundImage(''); setCloakName('Nuclear Academy'); setCloakLogo('/nuclear-academy-emblem.png'); setSelectedBrowser('google')
+    setPanicUrl('https://www.google.com'); setPanicCombo('Control+Shift+X'); setAntiClose(false); setCustomCursor(true); setBackgroundColor('#7eff84'); setBackgroundImage(''); setCloakName('Nuclear Academy'); setCloakLogo('/nuclear-academy-emblem.png'); setSelectedBrowser('duckduckgo')
   }
 
   function handleBackgroundImage(event: React.ChangeEvent<HTMLInputElement>) {
@@ -795,7 +803,7 @@ export default function Page() {
             <div className="settings-grid">
               <section className="settings-section"><div className="settings-section-title"><ShieldAlert /><div><h3>Panic Button</h3><p>Use your key combo to leave instantly.</p></div></div><label>Redirect URL<input value={panicUrl} onChange={(e) => setPanicUrl(e.target.value)} placeholder="https://www.google.com" /></label><label>Key Combo<input value={panicCombo} onChange={(e) => setPanicCombo(e.target.value)} placeholder="Control+Shift+X" /></label><button className="panic-button" type="button" onClick={() => window.location.assign(panicUrl)}>Test Panic Button</button></section>
               <section className="settings-section"><div className="settings-section-title"><ShieldCheck /><div><h3>Safety</h3><p>Control how the browser can be closed.</p></div></div><label className="toggle-row"><span>Anti Close</span><input type="checkbox" checked={antiClose} onChange={(e) => setAntiClose(e.target.checked)} /><span className="toggle-ui" /></label><label className="toggle-row"><span>Show custom cursor</span><input type="checkbox" checked={customCursor} onChange={(e) => setCustomCursor(e.target.checked)} /><span className="toggle-ui" /></label></section>
-              <section className="settings-section"><div className="settings-section-title"><Search /><div><h3>Search Engine</h3><p>Choose the engine used for searches.</p></div></div><select className="settings-select" value={selectedBrowser} onChange={(e) => setSelectedBrowser(e.target.value)}><option value="google">Google</option><option value="duckduckgo">DuckDuckGo</option><option value="brave">Brave Search</option><option value="bing">Bing</option></select></section><section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Browser proxy</h3><p>Choose the proxy engine for new navigations.</p></div></div><select className="settings-select" value={proxyEngine} onChange={(e) => setProxyEngine(e.target.value)}>{proxyEngines.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></section>
+              <section className="settings-section"><div className="settings-section-title"><Search /><div><h3>Search Engine</h3><p>Choose the engine used for searches.</p></div></div><select className="settings-select" value={selectedBrowser} onChange={(e) => setSelectedBrowser(e.target.value)}><option value="duckduckgo">DuckDuckGo</option><option value="brave">Brave Search</option><option value="bing">Bing</option></select></section><section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Browser proxy</h3><p>Choose the proxy engine for new navigations.</p></div></div><select className="settings-select" value={proxyEngine} onChange={(e) => setProxyEngine(e.target.value)}>{proxyEngines.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></section>
               <section className="settings-section"><div className="settings-section-title"><Palette /><div><h3>Appearance</h3><p>Set a custom color or background image.</p></div></div><label>Background color<input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} /></label><label className="file-button"><Upload /> Add background image<input type="file" accept="image/*" onChange={handleBackgroundImage} /></label></section>
               <section className="settings-section"><div className="settings-section-title"><Globe2 /><div><h3>Tab Cloak</h3><p>Change the browser title and favicon.</p></div></div><label>Website name<input value={cloakName} onChange={(e) => setCloakName(e.target.value)} /></label><label className="file-button"><Upload /> Add logo<input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = () => setCloakLogo(String(reader.result)); reader.readAsDataURL(file) } }} /></label><div className="cloak-presets">{['Google','Google Docs','Google Drive','Google Classroom','Google Slides','Google Sheets','IXL','Canvas','Gmail','Khan Academy','Clever','Schoology','Quizlet','Edpuzzle','Desmos','PowerSchool'].map((name) => <button type="button" key={name} onClick={() => setCloakName(name)}>{name}</button>)}</div></section>
               <section className="settings-section data-section"><div className="settings-section-title"><FileJson /><div><h3>Data</h3><p>Export or import your settings.</p></div></div><div className="data-actions"><button type="button" onClick={exportData}><Download /> Export</button><button type="button" onClick={() => importInput.current?.click()}><Upload /> Import</button><input ref={importInput} type="file" accept="application/json" onChange={importData} /></div></section>
@@ -869,12 +877,12 @@ export default function Page() {
               {communityChannels.filter((channel) => channel.type === 'text').map((channel) => <button className={`channel ${activeTextChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectTextChannel(channel.name, null)}><Hash aria-hidden="true" /><span>{channel.name}</span></button>)}
             </>}
             <p className="channel-heading voice-heading">VOICE CHANNELS {(canManageActiveServer || (!activeServerId && isOwner)) && <button type="button" className="channel-add" onClick={() => { if (activeServerId) { setChannelName(''); setChannelError(''); setChannelDialogType('voice') } else void addCommunityChannel('voice') }} aria-label="Add voice channel"><Plus aria-hidden="true" /></button>}</p>
-            {activeServerId ? serverChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name, channel.id)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>) : <>
-              <button className={`channel ${voiceJoined && activeVoiceChannel === 'Study Room' ? 'active-channel' : ''}`} type="button" onClick={() => selectVoiceChannel('Study Room')}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && activeVoiceChannel === 'Study Room' && <small className="voice-live">LIVE</small>}</button>
-              {communityChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceChannel === channel.name ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name, channel.id)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceChannel === channel.name && <small className="voice-live">LIVE</small>}</button>)}
+            {activeServerId ? serverChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceServerId === activeServerId && activeVoiceChannelId === channel.id ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name, channel.id)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceServerId === activeServerId && activeVoiceChannelId === channel.id && <small className="voice-live">LIVE</small>}</button>) : <>
+              <button className={`channel ${voiceJoined && !activeVoiceServerId && activeVoiceChannelId === null && activeVoiceChannel === 'Study Room' ? 'active-channel' : ''}`} type="button" onClick={() => selectVoiceChannel('Study Room')}><Headphones aria-hidden="true" /><span>Study Room</span>{voiceJoined && !activeVoiceServerId && activeVoiceChannelId === null && activeVoiceChannel === 'Study Room' && <small className="voice-live">LIVE</small>}</button>
+              {communityChannels.filter((channel) => channel.type === 'voice').map((channel) => <button className={`channel ${voiceJoined && activeVoiceServerId === activeServerId && activeVoiceChannelId === channel.id ? 'active-channel' : ''}`} type="button" key={channel.id} onClick={() => selectVoiceChannel(channel.name, channel.id)}><Headphones aria-hidden="true" /><span>{channel.name}</span>{voiceJoined && activeVoiceServerId === activeServerId && activeVoiceChannelId === channel.id && <small className="voice-live">LIVE</small>}</button>)}
             </>}
             {!activeServerId && <><button className="channel private-room-button" type="button" onClick={createPrivateRoom}><LockKeyhole aria-hidden="true" /><span>Private room</span></button>{privateRoomCode && <div className="private-code" role="status">Invite code <strong>{privateRoomCode}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(privateRoomCode)} aria-label="Copy invite code"><Copy aria-hidden="true" /></button></div>}</>}
-            <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? `In ${activeVoiceChannel}` : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? 'Leave Study Room' : 'Join Study Room'}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
+            <div className="discord-user-card"><button className="user-avatar profile-avatar-button" type="button" onClick={() => setProfileOpen(true)} aria-label="Edit profile">{profileImage ? <img src={profileImage} alt="Your profile" /> : profileName.slice(0, 1).toUpperCase()}<span /></button><div><strong>{profileName}</strong><small>{voiceJoined ? `In ${activeVoiceChannel}` : 'Online'}</small></div><div className="user-actions"><button type="button" onClick={toggleMute} disabled={!voiceJoined} aria-label={voiceMuted ? 'Unmute microphone' : 'Mute microphone'}>{voiceMuted ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="button" onClick={toggleVoice} aria-label={voiceJoined ? `Leave ${activeVoiceChannel}` : `Join ${activeVoiceChannel}`}><Headphones aria-hidden="true" /></button><UserButton /></div></div>
           </section>
           <section className={`discord-chat ${voiceJoined ? 'voice-room-active' : ''}`}>
             {voiceJoined && <div className="zoom-room" aria-label={`${activeVoiceChannel} voice call`}>
@@ -897,6 +905,7 @@ export default function Page() {
                 <button className="zoom-end" type="button" onClick={toggleVoice} aria-label={`Leave ${activeVoiceChannel}`}><span><PhoneOff aria-hidden="true" /></span><small>Leave</small></button>
               </nav>
             </div>}
+            {voiceError && <p className="chat-action-error" role="alert">{voiceError}</p>}
             <LiveChat
               channel={activeTextChannel}
               serverId={activeServerId}

@@ -59,6 +59,8 @@ export function LiveVoiceRoom({ active, userId, profileName, profileImage, muted
   const [connectionError, setConnectionError] = useState('')
   const peerConnections = useRef(new Map<string, RTCPeerConnection>())
   const seenSignals = useRef(new Set<string>())
+  const pendingSignalAcks = useRef(new Set<string>())
+  const acknowledgingSignals = useRef(new Set<string>())
   const offeredPeers = useRef(new Set<string>())
   const pendingCandidates = useRef(new Map<string, RTCIceCandidateInit[]>())
   const audioElements = useRef(new Map<string, HTMLAudioElement>())
@@ -104,6 +106,29 @@ export function LiveVoiceRoom({ active, userId, profileName, profileImage, muted
     })
     await readResponse(response)
   }, [endpoint, requestScope])
+
+  const acknowledgeSignals = useCallback(async (signalIds: string[]) => {
+    if (!endpoint || signalIds.length === 0) return
+    const response = await fetch(endpoint, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...requestScope, signalIds }),
+    })
+    await readResponse(response)
+  }, [endpoint, requestScope])
+
+  const acknowledgeSignal = useCallback(async (signalId: string) => {
+    if (acknowledgingSignals.current.has(signalId)) return
+    acknowledgingSignals.current.add(signalId)
+    try {
+      await acknowledgeSignals([signalId])
+      pendingSignalAcks.current.delete(signalId)
+    } catch {
+      setConnectionError('Voice signaling is delayed. Reconnecting…')
+    } finally {
+      acknowledgingSignals.current.delete(signalId)
+    }
+  }, [acknowledgeSignals])
 
   const createPeerConnection = useCallback((peerUserId: string) => {
     const current = peerConnections.current.get(peerUserId)
@@ -223,11 +248,23 @@ export function LiveVoiceRoom({ active, userId, profileName, profileImage, muted
     if (!active || !stream) return
     const signals: VoiceSignal[] = data?.signals ?? []
     for (const signal of signals) {
+      if (pendingSignalAcks.current.has(signal.id)) {
+        void acknowledgeSignal(signal.id)
+        continue
+      }
       if (seenSignals.current.has(signal.id)) continue
       seenSignals.current.add(signal.id)
-      void handleSignal(signal).catch(() => setConnectionError('A voice signal could not be processed. Reconnecting…'))
+      void handleSignal(signal)
+        .then(() => {
+          pendingSignalAcks.current.add(signal.id)
+          return acknowledgeSignal(signal.id)
+        })
+        .catch(() => {
+          seenSignals.current.delete(signal.id)
+          setConnectionError('A voice signal could not be processed. Reconnecting…')
+        })
     }
-  }, [active, data?.signals, handleSignal, stream])
+  }, [active, acknowledgeSignal, data?.signals, handleSignal, stream])
 
   useEffect(() => {
     for (const [participantId, audio] of audioElements.current) {
