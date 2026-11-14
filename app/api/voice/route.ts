@@ -1,5 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
-import { and, asc, eq, gt, isNull, lt } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, isNull, lt } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { isUuid } from '@/lib/community/access'
 import { db } from '@/lib/db'
@@ -185,6 +185,28 @@ export async function PUT(request: Request) {
   await db.delete(voiceParticipants).where(and(
     eq(voiceParticipants.roomKey, room.roomKey),
     lt(voiceParticipants.lastSeenAt, new Date(Date.now() - presenceWindowMs)),
+  ))
+  return NextResponse.json({ ok: true })
+}
+
+export async function PATCH(request: Request) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Sign in required.' }, { status: 401 })
+  const body = await readJson(request)
+  if (!body) return NextResponse.json({ error: 'Invalid voice signal acknowledgement.' }, { status: 400 })
+
+  const room = await resolveRoom(body, userId)
+  if (isRoomError(room)) return NextResponse.json({ error: room.error }, { status: room.status })
+
+  const signalIds = Array.isArray(body.signalIds) ? [...new Set(body.signalIds)] : []
+  if (signalIds.length === 0 || signalIds.length > 100 || !signalIds.every((id) => typeof id === 'string' && isUuid(id))) {
+    return NextResponse.json({ error: 'Invalid voice signal acknowledgement.' }, { status: 400 })
+  }
+
+  await db.delete(voiceSignals).where(and(
+    eq(voiceSignals.roomKey, room.roomKey),
+    eq(voiceSignals.toUserId, userId),
+    inArray(voiceSignals.id, signalIds as string[]),
   ))
   return NextResponse.json({ ok: true })
 }

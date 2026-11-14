@@ -1,10 +1,9 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { isUuid } from '@/lib/community/access'
 import { db } from '@/lib/db'
 import { chatMessages, communityChannels, communityServerChannels, communityServerMembers, communityServers, userProfiles } from '@/lib/db/schema'
-import { sql } from 'drizzle-orm'
 
 const messageFields = {
   id: chatMessages.id,
@@ -60,9 +59,9 @@ export async function GET(request: Request) {
     const messages = await db.select(messageFields)
       .from(chatMessages)
       .where(and(eq(chatMessages.serverId, serverId), eq(chatMessages.serverChannelId, serverChannelId)))
-      .orderBy(asc(chatMessages.createdAt))
+      .orderBy(desc(chatMessages.createdAt))
       .limit(200)
-    return NextResponse.json({ messages })
+    return NextResponse.json({ messages: messages.reverse() })
   }
 
   if (channelName !== 'general') {
@@ -76,9 +75,9 @@ export async function GET(request: Request) {
   const messages = await db.select(messageFields)
     .from(chatMessages)
     .where(and(eq(chatMessages.channel, channelName), isNull(chatMessages.serverId)))
-    .orderBy(asc(chatMessages.createdAt))
+    .orderBy(desc(chatMessages.createdAt))
     .limit(200)
-  return NextResponse.json({ messages })
+  return NextResponse.json({ messages: messages.reverse() })
 }
 
 export async function POST(request: Request) {
@@ -94,6 +93,7 @@ export async function POST(request: Request) {
   } | null
   const message = typeof body?.message === 'string' ? body.message.trim() : ''
   if (!message || message.length > 2000) return NextResponse.json({ error: 'Message must be between 1 and 2000 characters.' }, { status: 400 })
+  if (/\bmessage\b/i.test(message)) return NextResponse.json({ error: 'That word is blocked by message moderation.' }, { status: 400 })
 
   const channelName = typeof body?.channel === 'string' ? body.channel.trim() : 'general'
   if (!validChannelName(channelName)) return NextResponse.json({ error: 'Invalid channel.' }, { status: 400 })
