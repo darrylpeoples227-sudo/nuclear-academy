@@ -1,4 +1,4 @@
-import { pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { boolean, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 export const communityServers = pgTable('community_servers', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -54,3 +54,22 @@ export const chatMessages = pgTable('chat_messages', {
   serverId: uuid('server_id'),
   serverChannelId: uuid('server_channel_id'),
 })
+
+export const voiceParticipants = pgTable('voice_participants', {
+  roomKey: text('room_key').notNull(),
+  clerkUserId: text('clerk_user_id').notNull(),
+  displayName: text('display_name').notNull(),
+  avatarUrl: text('avatar_url'),
+  muted: boolean('muted').notNull().default(false),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [primaryKey({ columns: [table.roomKey, table.clerkUserId] })])
+
+export const voiceSignals = pgTable('voice_signals', {
+  roomKey: text('room_key').notNull(),
+  toUserId: text('to_user_id').notNull(),
+  id: uuid('id').defaultRandom().notNull(),
+  fromUserId: text('from_user_id').notNull(),
+  signalType: text('signal_type').notNull(),
+  payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [primaryKey({ columns: [table.roomKey, table.toUserId, table.createdAt, table.id] })])
